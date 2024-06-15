@@ -13,9 +13,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -36,56 +37,50 @@ public class StocksStatsApplication {
                 .setClientSecret(props.getProperty("secret-key"))
                 .setUserAgent(new UserAgentBuilder().appname("stocks-stats").author("putotonto").version("1.0"));
 
-        // read file 'symbols.txt' and get list of symbols
         List<String> symbols = Files.readAllLines(Paths.get("src/main/resources/stocks.txt"));
 
         client.userlessConnect();
-
-        // ConcurrentHashMap to handle concurrent modifications
-        var stockMentions = new ConcurrentHashMap<String, Integer>();
-
+        var stockAnalyzedList = new ArrayList<StockAnalyzed>();
         String subreddit = "wallstreetbets";
-
-//        symbols.forEach(symbol -> {
-//            executor.execute(() -> {
-//                res.stream()
-//                        .forEach(post -> {
-//                            try {
-//                                List<RedditComment> comments = client.getCommentsForPost(subreddit, post.getId()).submit();
-//                                for (RedditComment comment : comments) {
-//                                    if (comment.getBody().contains(symbol)) {
-//                                        synchronized (stockMentions) {
-//                                            stockMentions.put(symbol, stockMentions.getOrDefault(symbol, 0) + 1);
-//                                        }
-//                                    }
-//                                }
-//                            } catch (Exception ignored) {
-//                            }
-//                        });
-//            });
-//        });
-//
-
-
         ExecutorService executor = Executors.newFixedThreadPool(20);
-
-        var res = client.getSubredditPosts(subreddit, Sorting.NEW).submit();
-        res.stream().forEach(post -> {
+        var res = client.getSubredditPosts(subreddit, Sorting.NEW).limit(100).submit();
+        res.forEach(post -> {
             executor.execute(() -> {
                 try {
-                    List<RedditComment> comments = client.getCommentsForPost(subreddit, post.getId()).submit();
+                    List<RedditComment> comments = client.getCommentsForPost(subreddit, post.getId()).limit(100).submit();
                     for (RedditComment comment : comments) {
                         String body = comment.getBody();
 
                         symbols.forEach(symbol -> {
-                            if (body != null && body.contains(symbol)) {
-                                stockMentions.merge(symbol, 1, Integer::sum);
-                                System.out.println(comment.getAuthor() + "\n-----------------------------\n" + body);
-                                System.out.println("-----------------------------\n");
+                            if (body != null && body.contains(symbol) && !isModOrBot(comment)) {
+                                synchronized (stockAnalyzedList) {
+                                    StockAnalyzed stockAnalyzed = findStockAnalyzed(stockAnalyzedList, symbol);
+                                    StockAnalyzed.DetectionOrigin origin =
+                                            new StockAnalyzed.DetectionOrigin(comment.getLinkUrl(), body);
+
+                                    if (stockAnalyzed == null) {
+                                        stockAnalyzed = StockAnalyzed.builder()
+                                                .stock(symbol)
+                                                .amount(1)
+                                                .origin(new ArrayList<>(List.of(origin)))
+                                                .build();
+                                        stockAnalyzedList.add(stockAnalyzed);
+                                    } else {
+                                        stockAnalyzed.setAmount(stockAnalyzed.getAmount() + 1);
+                                        stockAnalyzed.getOrigin().add(origin);
+                                    }
+                                }
                             }
                         });
+
+                        try {
+                            String response = body + "\n----------------\n";
+                            Files.write(Paths.get("src/main/resources/response.txt"), response.getBytes(), StandardOpenOption.APPEND);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
-                    // sleep for 1 second to avoid rate limit
+
                     Thread.sleep(1000);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -102,6 +97,21 @@ public class StocksStatsApplication {
             executor.shutdownNow();
         }
 
-        stockMentions.forEach((k, v) -> System.out.println(k + " " + v));
     }
+
+    private static StockAnalyzed findStockAnalyzed(List<StockAnalyzed> list, String symbol) {
+        for (StockAnalyzed stockAnalyzed : list) {
+            if (stockAnalyzed.getStock().equals(symbol)) {
+                return stockAnalyzed;
+            }
+        }
+        return null;
+    }
+
+
+    public static boolean isModOrBot(RedditComment comment) {
+        return comment.getDistinguished().toLowerCase().equals("moderator") ||
+                comment.getAuthor().toLowerCase().contains("bot");
+    }
+
 }
