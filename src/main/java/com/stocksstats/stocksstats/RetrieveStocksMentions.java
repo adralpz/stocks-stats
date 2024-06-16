@@ -23,7 +23,7 @@ public class RetrieveStocksMentions {
     private final Reddit4J client;
     private final List<String> symbols;
     private final List<StockAnalyzed> stockAnalyzedList = new ArrayList<>();
-    private ExecutorService executor;
+    private final ExecutorService executor;
 
     //TODO parametrizar
     private final int THREAD_POOL_SIZE = 20;
@@ -47,16 +47,11 @@ public class RetrieveStocksMentions {
                 executor.execute(() -> processPost(subreddit, post));
             }
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (AuthenticationException e) {
+        } catch (IOException | InterruptedException | AuthenticationException e) {
             throw new RuntimeException(e);
         }
 
     }
-
 
     private void processPost(String subreddit, RedditPost post) {
         try {
@@ -113,26 +108,6 @@ public class RetrieveStocksMentions {
             throw new RuntimeException(e);
         }
     }
-
-    public void RetrieveStocksMentions() throws AuthenticationException, IOException, InterruptedException {
-        Reddit4J client = Initializer.client;
-        var symbols = Initializer.stockSymbols;
-
-        var stockAnalyzedList = new ArrayList<StockAnalyzed>();
-
-        //TODO Usar el de Initializer
-        String subreddit = "wallstreetbets";
-
-        ExecutorService executor = Executors.newFixedThreadPool(20);
-        var res = client.getSubredditPosts(subreddit, Sorting.NEW).limit(100).submit();
-
-        res.forEach(post -> {
-            executor.execute(() -> {
-
-            });
-        });
-    }
-
 
     private static StockAnalyzed findStockAnalyzed(List<StockAnalyzed> list, String symbol) {
         for (StockAnalyzed stockAnalyzed : list) {

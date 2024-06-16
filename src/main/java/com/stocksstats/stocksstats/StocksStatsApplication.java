@@ -52,7 +52,7 @@ public class StocksStatsApplication {
                         String body = comment.getBody();
 
                         symbols.forEach(symbol -> {
-                            if (body != null && body.contains(symbol) && !isModOrBot(comment)) {
+                            if (body != null && body.contains(symbol)) {
                                 synchronized (stockAnalyzedList) {
                                     StockAnalyzed stockAnalyzed = findStockAnalyzed(stockAnalyzedList, symbol);
                                     StockAnalyzed.DetectionOrigin origin =
@@ -110,7 +110,8 @@ public class StocksStatsApplication {
 
 
     public static boolean isModOrBot(RedditComment comment) {
-        return comment.getDistinguished().toLowerCase().equals("moderator") ||
+        return comment.getDistinguished() != null ||
+                comment.getDistinguished().equalsIgnoreCase("moderator") ||
                 comment.getAuthor().toLowerCase().contains("bot");
     }
 
