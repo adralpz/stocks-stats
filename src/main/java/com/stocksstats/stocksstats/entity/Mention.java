@@ -1,6 +1,7 @@
-package com.stocksstats.stocksstats.dto;
+package com.stocksstats.stocksstats.entity;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +12,7 @@ import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 @Getter
 @Setter
@@ -31,5 +33,9 @@ public class Mention {
 
     @Column(name = "date")
     private Timestamp date;
+
+    @ColumnDefault("now()")
+    @Column(name = "created_at")
+    private LocalDate createdAt;
 
 }

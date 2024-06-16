@@ -1,14 +1,4 @@
-package com.stocksstats.stocksstats;
-
-import jakarta.annotation.PostConstruct;
-import lombok.Data;
-import masecla.reddit4j.client.Reddit4J;
-import masecla.reddit4j.client.UserAgentBuilder;
-import masecla.reddit4j.exceptions.AuthenticationException;
-import org.springframework.stereotype.Component;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
+package com.stocksstats.stocksstats.config;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +7,16 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
+
+import jakarta.annotation.PostConstruct;
+import lombok.Data;
+import masecla.reddit4j.client.Reddit4J;
+import masecla.reddit4j.client.UserAgentBuilder;
+import masecla.reddit4j.exceptions.AuthenticationException;
 
 @Data
 @Component
@@ -32,21 +32,19 @@ public final class Initializer {
     @Value("classpath:stocks.txt")
     private Resource stocksResource;
 
-
     @PostConstruct
     public void start() {
         try {
             initClient();
             Initializer.stockSymbols = stocksSymbols();
 
-            //TODO Elaborar una lista de subreddits y recuparla desde aqui
+            // TODO Elaborar una lista de subreddits y recuparla desde aqui
 
         } catch (Exception ex) {
-            //TODO Reemplazar con logger
+            // TODO Reemplazar con logger
             System.err.println("Error de mierda: " + ex.getMessage());
         }
     }
-
 
     private void initClient() throws AuthenticationException, IOException, InterruptedException {
         Properties props = retrieveCredentials();
@@ -66,7 +64,7 @@ public final class Initializer {
             props.load(is);
             return props;
         } catch (Exception ex) {
-            //TODO Reemplazar por logger
+            // TODO Reemplazar por logger
             System.err.println("Error al encontrar el archivo de credenciales");
             return null;
         }
@@ -75,13 +73,13 @@ public final class Initializer {
     private List<String> stocksSymbols() {
         var stocksSymbols = new ArrayList<String>();
         try {
-           stocksSymbols.addAll(Files.readAllLines(Paths.get(stocksResource.getURI())));
-           return stocksSymbols;
+            stocksSymbols.addAll(Files.readAllLines(Paths.get(stocksResource.getURI())));
+            return stocksSymbols;
         } catch (Exception ignored) {
-            //TODO Reemplazar por logger
+            // TODO Reemplazar por logger
             System.err.println("Error al leer el archivo de simbolos de stocks");
         }
-        return List.of("NVDA","MSFT", "AMZN");
+        return List.of("NVDA", "MSFT", "AMZN");
     }
 
 }

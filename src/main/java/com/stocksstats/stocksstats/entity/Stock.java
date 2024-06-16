@@ -1,6 +1,10 @@
-package com.stocksstats.stocksstats.dto;
+package com.stocksstats.stocksstats.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,5 +23,8 @@ public class Stock {
 
     @Column(name = "reputation")
     private Integer reputation;
+
+    @Column(name = "symbol", nullable = false, length = Integer.MAX_VALUE)
+    private String symbol;
 
 }
