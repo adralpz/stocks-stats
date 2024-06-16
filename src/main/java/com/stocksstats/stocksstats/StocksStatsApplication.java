@@ -15,11 +15,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class StocksStatsApplication {
@@ -37,7 +39,10 @@ public class StocksStatsApplication {
                 .setClientSecret(props.getProperty("secret-key"))
                 .setUserAgent(new UserAgentBuilder().appname("stocks-stats").author("putotonto").version("1.0"));
 
-        List<String> symbols = Files.readAllLines(Paths.get("src/main/resources/stocks.txt"));
+        List<String> symbols = Files.readAllLines(Paths.get("src/main/resources/stocks.txt"))
+            .stream()
+            .flatMap(line -> Arrays.stream(line.split(",")))
+            .collect(Collectors.toList());
 
         client.userlessConnect();
         var stockAnalyzedList = new ArrayList<StockAnalyzed>();
