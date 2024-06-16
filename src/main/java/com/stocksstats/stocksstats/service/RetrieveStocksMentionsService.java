@@ -1,14 +1,4 @@
-package com.stocksstats.stocksstats;
-
-import masecla.reddit4j.client.Reddit4J;
-import masecla.reddit4j.exceptions.AuthenticationException;
-import masecla.reddit4j.objects.RedditComment;
-import masecla.reddit4j.objects.RedditPost;
-import masecla.reddit4j.objects.Sorting;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+package com.stocksstats.stocksstats.service;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,8 +10,25 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Component
-public class RetrieveStocksMentions {
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import com.stocksstats.stocksstats.StockAnalyzed;
+import com.stocksstats.stocksstats.config.Initializer;
+import com.stocksstats.stocksstats.entity.Mention;
+import com.stocksstats.stocksstats.repository.MentionRepo;
+
+import masecla.reddit4j.client.Reddit4J;
+import masecla.reddit4j.exceptions.AuthenticationException;
+import masecla.reddit4j.objects.RedditComment;
+import masecla.reddit4j.objects.RedditPost;
+import masecla.reddit4j.objects.Sorting;
+
+@Service
+public class RetrieveStocksMentionsService {
+    private final MentionRepo mentionRepo;
 
     private final Reddit4J client;
     private final List<String> symbols;
@@ -32,14 +39,15 @@ public class RetrieveStocksMentions {
     private int THREAD_POOL_SIZE;
 
     @Autowired
-    public RetrieveStocksMentions() {
+    public RetrieveStocksMentionsService(MentionRepo mentionRepo) {
+        this.mentionRepo = mentionRepo;
         client = Initializer.client;
         symbols = Collections.singletonList("walltreetbets");
         executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
         stockAnalyzedList = new ArrayList<>();
     }
 
-    //Se ejecuta una vez al dia a las 12:00pm
+    // Se ejecuta una vez al dia a las 12:00pm
     @Scheduled(cron = "0 0 12 * * *", zone = "Europe/Madrid")
     public void analyzeSubreddit() {
         try {
@@ -53,7 +61,6 @@ public class RetrieveStocksMentions {
         } catch (IOException | InterruptedException | AuthenticationException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     private void processPost(String subreddit, RedditPost post) {
@@ -65,20 +72,22 @@ public class RetrieveStocksMentions {
 
             Thread.sleep(1000);
         } catch (Exception e) {
-            //TODO Reemplazar por logger
+            // TODO Reemplazar por logger
             System.err.println(e.getMessage());
         }
     }
 
-
     private void processComment(RedditComment comment) {
         String body = comment.getBody();
 
+        List<Mention> mentions = new ArrayList<>();
         for (String symbol : symbols) {
             if (body != null && body.contains(symbol) && !isModOrBot(comment)) {
                 updateStockAnalysis(comment, body, symbol);
             }
         }
+
+        // TODO: seguir por aquí
 
         logInResponseFile(body);
     }
@@ -86,8 +95,7 @@ public class RetrieveStocksMentions {
     private void updateStockAnalysis(RedditComment comment, String body, String symbol) {
         synchronized (stockAnalyzedList) {
             StockAnalyzed stockAnalyzed = findStockAnalyzed(stockAnalyzedList, symbol);
-            StockAnalyzed.DetectionOrigin origin =
-                    new StockAnalyzed.DetectionOrigin(comment.getLinkUrl(), body);
+            StockAnalyzed.DetectionOrigin origin = new StockAnalyzed.DetectionOrigin(comment.getLinkUrl(), body);
 
             if (stockAnalyzed == null) {
                 stockAnalyzed = StockAnalyzed.builder()
