@@ -6,6 +6,8 @@ import masecla.reddit4j.objects.RedditComment;
 import masecla.reddit4j.objects.RedditPost;
 import masecla.reddit4j.objects.Sorting;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -13,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,29 +25,29 @@ public class RetrieveStocksMentions {
 
     private final Reddit4J client;
     private final List<String> symbols;
-    private final List<StockAnalyzed> stockAnalyzedList = new ArrayList<>();
+    private final List<StockAnalyzed> stockAnalyzedList;
     private final ExecutorService executor;
 
-    //TODO parametrizar
-    private final int THREAD_POOL_SIZE = 20;
+    @Value("${thread.pool.size:20}")
+    private int THREAD_POOL_SIZE;
 
     @Autowired
-    public RetrieveStocksMentions(List<String> symbols) {
-    //    public RetrieveStocksMentions(Reddit4J client, List<String> symbols) {
-    //        this.client = client;
-        //TODO Que el autowired funcione con el cliente
-        client = null;
-        this.symbols = symbols;
-        this.executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+    public RetrieveStocksMentions() {
+        client = Initializer.client;
+        symbols = Collections.singletonList("walltreetbets");
+        executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+        stockAnalyzedList = new ArrayList<>();
     }
 
-    public void analyzeSubreddit(String subreddit) {
+    //Se ejecuta una vez al dia a las 12:00pm
+    @Scheduled(cron = "0 0 12 * * *", zone = "Europe/Madrid")
+    public void analyzeSubreddit() {
         try {
-            var posts = client.getSubredditPosts(subreddit, Sorting.NEW)
+            var posts = client.getSubredditPosts(symbols.getFirst(), Sorting.NEW)
                     .limit(100).submit();
 
             for (RedditPost post : posts) {
-                executor.execute(() -> processPost(subreddit, post));
+                executor.execute(() -> processPost(symbols.getFirst(), post));
             }
 
         } catch (IOException | InterruptedException | AuthenticationException e) {
@@ -119,7 +122,7 @@ public class RetrieveStocksMentions {
     }
 
     public static boolean isModOrBot(RedditComment comment) {
-        return comment.getDistinguished().toLowerCase().equals("moderator") ||
+        return comment.getDistinguished().equalsIgnoreCase("moderator") ||
                 comment.getAuthor().toLowerCase().contains("bot");
     }
 
