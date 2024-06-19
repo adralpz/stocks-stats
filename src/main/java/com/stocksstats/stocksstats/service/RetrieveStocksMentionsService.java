@@ -94,9 +94,8 @@ public class RetrieveStocksMentionsService {
     private void processComment(RedditComment comment) {
         String body = comment.getBody();
 
-        List<Mention> mentions = new ArrayList<>();
         for (String symbol : symbols) {
-            if (body != null && body.contains(symbol) && !isModOrBot(comment)) {
+            if (body != null && body.contains(symbol) && isModOrBot(comment)) {
                 updateStockAnalysis(comment, body, symbol);
             }
         }
@@ -114,12 +113,12 @@ public class RetrieveStocksMentionsService {
             if (stockAnalyzed == null) {
                 stockAnalyzed = StockAnalyzed.builder()
                         .stock(symbol)
-                        .amount(1)
+                        .amount((short) 1)
                         .origin(new ArrayList<>(List.of(origin)))
                         .build();
                 stockAnalyzedList.add(stockAnalyzed);
             } else {
-                stockAnalyzed.setAmount(stockAnalyzed.getAmount() + 1);
+                stockAnalyzed.setAmount((short) (stockAnalyzed.getAmount() + 1));
                 stockAnalyzed.getOrigin().add(origin);
             }
         }
@@ -144,8 +143,25 @@ public class RetrieveStocksMentionsService {
     }
 
     public static boolean isModOrBot(RedditComment comment) {
-        return comment.getDistinguished().equalsIgnoreCase("moderator") ||
-                comment.getAuthor().toLowerCase().contains("bot");
+        return comment.getAuthor().toLowerCase().contains("bot")  ||
+                comment.getAuthor().toLowerCase().contains("mod");
+    }
+
+    public static Mention toMention(StockAnalyzed stockAnalyzed) {
+        Mention mention = new Mention();
+        mention.setSymbol(stockAnalyzed.getStock());
+        mention.setAmount(stockAnalyzed.getAmount());
+        mention.setCreatedAt(LocalDate.now());
+
+        return mention;
+    }
+
+    public static Origin toOrigin(String url, String textFragment, Mention mention) {
+        Origin origin = new Origin();
+        origin.setUrl(url);
+        origin.setTextFragment(textFragment);
+        origin.setMention(mention);
+        return origin;
     }
 
 }
