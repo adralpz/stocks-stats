@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigInteger;
 import java.util.List;
 
 @Data
@@ -14,9 +13,8 @@ import java.util.List;
 @Builder
 public class StockAnalyzed {
 
-    private BigInteger id;
     private String stock;
-    private Integer amount;
+    private Short amount;
     private List<DetectionOrigin> origin;
 
     @Data
