@@ -73,7 +73,7 @@ public class Initializer {
     private List<String> stocksSymbols() {
         var stocksSymbols = new ArrayList<String>();
         try {
-            stocksSymbols.addAll(Files.readAllLines(Paths.get(stocksResource.getURI())));
+            stockRepo.findAll().forEach(stock -> stocksSymbols.add(stock.getSymbol()));
             return stocksSymbols;
         } catch (Exception ignored) {
             // TODO Reemplazar por logger
