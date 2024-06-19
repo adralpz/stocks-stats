@@ -1,12 +1,11 @@
 package com.stocksstats.stocksstats.dto;
 
-import java.math.BigInteger;
-import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -14,9 +13,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class StockAnalyzed {
 
-    private BigInteger id;
     private String stock;
-    private Integer amount;
+    private Short amount;
     private List<DetectionOrigin> origin;
 
     @Data
