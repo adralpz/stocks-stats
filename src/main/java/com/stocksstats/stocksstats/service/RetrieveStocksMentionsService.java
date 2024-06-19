@@ -100,8 +100,6 @@ public class RetrieveStocksMentionsService {
             }
         }
 
-        // TODO: seguir por aquí
-
         logInResponseFile(body);
     }
 
