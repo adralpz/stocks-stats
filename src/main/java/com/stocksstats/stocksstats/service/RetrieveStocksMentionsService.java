@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.stocksstats.stocksstats.dto.StockAnalyzed;
+import com.stocksstats.stocksstats.entity.Origin;
+import com.stocksstats.stocksstats.repository.OriginRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,12 +31,15 @@ import masecla.reddit4j.objects.Sorting;
 
 @Service
 public class RetrieveStocksMentionsService {
-    private final MentionRepo mentionRepo;
 
-    private final Reddit4J client;
-    private final List<String> symbols;
-    private final List<StockAnalyzed> stockAnalyzedList;
-    private final ExecutorService executor;
+    @Autowired
+    private MentionRepo mentionRepo;
+    @Autowired
+    private OriginRepo originRepo;
+
+    private final Reddit4J client =Initializer.client;
+    private final List<String> symbols = Initializer.stockSymbols;
+    private final List<StockAnalyzed> stockAnalyzedList = new ArrayList<>();
 
     @Value("${thread.pool.size:20}")
     private int THREAD_POOL_SIZE;
@@ -58,8 +64,19 @@ public class RetrieveStocksMentionsService {
                 executor.execute(() -> processPost(symbols.getFirst(), post));
             }
 
+            save();
         } catch (IOException | InterruptedException | AuthenticationException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void save() {
+        for (StockAnalyzed stockAnalyzed : stockAnalyzedList) {
+            Mention mention = mentionRepo.save(toMention(stockAnalyzed));
+
+            originRepo.saveAll(stockAnalyzed.getOrigin().stream()
+                    .map(origin -> toOrigin(origin.getUrl(), origin.getText(), mention))
+                    .collect(Collectors.collectingAndThen(Collectors.toList(), originRepo::saveAll)));
         }
     }
 
