@@ -162,4 +162,8 @@ public class RetrieveStocksMentionsService {
         return origin;
     }
 
+    public static List<String> getStocks() {
+        return Initializer.stockSymbols;
+    }
+
 }
