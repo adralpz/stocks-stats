@@ -1,41 +1,33 @@
 package com.stocksstats.stocksstats.entity;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.hibernate.annotations.ColumnDefault;
+
+import java.time.LocalDate;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "mention", schema = "stock_stats")
 public class Mention {
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "mention_id_gen")
-    @SequenceGenerator(name = "mention_id_gen", sequenceName = "mention_id_seq", allocationSize = 1)
-    @Column(name = "id", nullable = false)
-    private Integer id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "mention_id_gen")
+	@SequenceGenerator(name = "mention_id_gen", sequenceName = "stock_stats.mention_id_seq", allocationSize = 1)
+	@Column(name = "id", nullable = false)
+	private Integer id;
 
-    @Column(name = "symbol", nullable = false, length = Integer.MAX_VALUE)
-    private String symbol;
+	@NotNull
+	@Column(name = "symbol", nullable = false, length = Integer.MAX_VALUE)
+	private String symbol;
 
-    @Column(name = "amount")
-    private Short amount;
+	@Column(name = "amount")
+	private Short amount;
 
-    @Column(name = "date")
-    private Timestamp date;
-
-    @ColumnDefault("now()")
-    @Column(name = "created_at")
-    private LocalDate createdAt;
+	@ColumnDefault("now()")
+	@Column(name = "created_at")
+	private LocalDate createdAt;
 
 }

@@ -1,30 +1,29 @@
 package com.stocksstats.stocksstats.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.antlr.v4.runtime.misc.NotNull;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "stocks", schema = "stock_stats")
+@Table(name = "stock", schema = "stock_stats")
 public class Stock {
-    @Id
-    @SequenceGenerator(name = "stocks_id_gen", sequenceName = "origin_id_seq", allocationSize = 1)
-    @Column(name = "id", nullable = false, length = Integer.MAX_VALUE)
-    private String id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "stock_id_gen")
+	@SequenceGenerator(name = "stock_id_gen", sequenceName = "stock_stats.stocks_id_seq", allocationSize = 1)
+	@Column(name = "id", nullable = false)
+	private Integer id;
 
-    @Column(name = "name", length = Integer.MAX_VALUE)
-    private String name;
+	@NotNull
+	@Column(name = "symbol", nullable = false, length = Integer.MAX_VALUE)
+	private String symbol;
 
-    @Column(name = "reputation")
-    private Integer reputation;
+	@Column(name = "name", length = Integer.MAX_VALUE)
+	private String name;
 
-    @Column(name = "symbol", nullable = false, length = Integer.MAX_VALUE)
-    private String symbol;
+	@Column(name = "reputation")
+	private Short reputation;
 
 }
