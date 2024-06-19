@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.stocksstats.stocksstats.dto.StockAnalyzed;
 import com.stocksstats.stocksstats.entity.Origin;
@@ -18,7 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.stocksstats.stocksstats.StockAnalyzed;
 import com.stocksstats.stocksstats.config.Initializer;
 import com.stocksstats.stocksstats.entity.Mention;
 import com.stocksstats.stocksstats.repository.MentionRepo;
@@ -44,24 +45,20 @@ public class RetrieveStocksMentionsService {
     @Value("${thread.pool.size:20}")
     private int THREAD_POOL_SIZE;
 
-    @Autowired
-    public RetrieveStocksMentionsService(MentionRepo mentionRepo) {
-        this.mentionRepo = mentionRepo;
-        client = Initializer.client;
-        symbols = Collections.singletonList("walltreetbets");
-        executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
-        stockAnalyzedList = new ArrayList<>();
-    }
-
     // Se ejecuta una vez al dia a las 12:00pm
     @Scheduled(cron = "0 0 12 * * *", zone = "Europe/Madrid")
     public void analyzeSubreddit() {
-        try {
-            var posts = client.getSubredditPosts(symbols.getFirst(), Sorting.NEW)
+        try (ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE)) {
+            var posts = client.getSubredditPosts("wallstreetbets", Sorting.NEW)
                     .limit(100).submit();
 
             for (RedditPost post : posts) {
-                executor.execute(() -> processPost(symbols.getFirst(), post));
+                executor.execute(() -> processPost("wallstreetbets", post));
+            }
+
+            executor.shutdown();
+            if (!executor.awaitTermination(60, TimeUnit.MINUTES)) {
+                executor.shutdownNow();
             }
 
             save();
