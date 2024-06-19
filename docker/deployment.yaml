@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stocks-stats
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stocks-stats
+  template:
+    metadata:
+      labels:
+        app: stocks-stats
+    spec:
+      containers:
+      - name: stocks-stats
+        image: gcr.io/symbolic-yeti-424018-j8/stocks-stats
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stocks-stats-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: stocks-stats
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
