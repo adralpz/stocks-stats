@@ -1,5 +1,6 @@
 package com.stocksstats.stocksstats.dto;
 
+import com.stocksstats.stocksstats.entity.Stock;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +14,7 @@ import java.util.List;
 @Builder
 public class StockAnalyzed {
 
-    private String stock;
+    private Stock stock;
     private Short amount;
     private List<DetectionOrigin> origin;
 
