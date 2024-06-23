@@ -1,22 +1,21 @@
 package com.stocksstats.stocksstats.config;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-
 import com.stocksstats.stocksstats.repository.StockRepo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import masecla.reddit4j.client.Reddit4J;
 import masecla.reddit4j.client.UserAgentBuilder;
 import masecla.reddit4j.exceptions.AuthenticationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Properties;
 
 @Data
 @Configuration
@@ -26,7 +25,7 @@ public class Initializer {
     private StockRepo stockRepo;
 
     public static Reddit4J client;
-    public static List<String> stockSymbols;
+    public static LinkedHashMap<Integer, String> stockSymbols;
     public static List<String> subreddits;
 
     @Value("classpath:reddit-credentials.properties")
@@ -70,16 +69,16 @@ public class Initializer {
         }
     }
 
-    private List<String> stocksSymbols() {
-        var stocksSymbols = new ArrayList<String>();
+    private LinkedHashMap<Integer, String> stocksSymbols() {
+        var stocksSymbols = new LinkedHashMap<Integer, String>();
         try {
-            stockRepo.findAll().forEach(stock -> stocksSymbols.add(stock.getSymbol()));
+            stockRepo.findAll().forEach(stock -> stocksSymbols.put(stock.getId(), stock.getSymbol()));
             return stocksSymbols;
         } catch (Exception ignored) {
             // TODO Reemplazar por logger
             System.err.println("Error al leer el archivo de simbolos de stocks");
+            return null;
         }
-        return List.of("NVDA", "MSFT", "AMZN");
     }
 
 }
