@@ -149,26 +149,10 @@ public class RetrieveStocksMentionsService {
         return null;
     }
 
-    public static boolean isModOrBot(RedditComment comment) {
+    private static boolean isModOrBot(RedditComment comment) {
         return comment.getAuthor().toLowerCase().contains("bot")  ||
                 comment.getAuthor().toLowerCase().contains("mod");
     }
 
-    public static Mention toMention(StockAnalyzed stockAnalyzed) {
-        Mention mention = new Mention();
-        mention.setSymbol(stockAnalyzed.getStock());
-        mention.setAmount(stockAnalyzed.getAmount());
-        mention.setCreatedAt(LocalDate.now());
-
-        return mention;
-    }
-
-    public static Origin toOrigin(String url, String textFragment, Mention mention) {
-        Origin origin = new Origin();
-        origin.setUrl(url);
-        origin.setTextFragment(textFragment);
-        origin.setMention(mention);
-        return origin;
-    }
 
 }
