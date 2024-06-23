@@ -53,11 +53,11 @@ public class RetrieveStocksMentionsService {
                     .limit(100).submit();
 
             for (RedditPost post : posts) {
-                executor.execute(() -> processPost("wallstreetbets", post));
+                executor.execute(() -> processPost(post));
             }
 
             executor.shutdown();
-            if (!executor.awaitTermination(60, TimeUnit.MINUTES)) {
+            if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
                 executor.shutdownNow();
             }
 
@@ -71,15 +71,20 @@ public class RetrieveStocksMentionsService {
         for (StockAnalyzed stockAnalyzed : stockAnalyzedList) {
             Mention mention = mentionRepo.save(toMention(stockAnalyzed));
 
-            originRepo.saveAll(stockAnalyzed.getOrigin().stream()
-                    .map(origin -> toOrigin(origin.getUrl(), origin.getText(), mention))
-                    .collect(Collectors.collectingAndThen(Collectors.toList(), originRepo::saveAll)));
+            List<Origin> originList = new ArrayList<>();
+            for (StockAnalyzed.DetectionOrigin origin : stockAnalyzed.getOrigin()) {
+                Origin mappedOrigin = toOrigin(origin.getUrl(), origin.getText(), mention);
+                originList.add(mappedOrigin);
+            }
+
+            originRepo.saveAll(originList);
         }
     }
 
-    private void processPost(String subreddit, RedditPost post) {
+
+    private void processPost(RedditPost post) {
         try {
-            List<RedditComment> comments = client.getCommentsForPost(subreddit, post.getId()).limit(100).submit();
+            List<RedditComment> comments = client.getCommentsForPost("wallstreetbets", post.getId()).limit(100).submit();
             for (RedditComment comment : comments) {
                 processComment(comment);
             }
@@ -94,23 +99,27 @@ public class RetrieveStocksMentionsService {
     private void processComment(RedditComment comment) {
         String body = comment.getBody();
 
-        for (String symbol : symbols) {
-            if (body != null && body.contains(symbol) && isModOrBot(comment)) {
-                updateStockAnalysis(comment, body, symbol);
+        for (Map.Entry<Integer, String> entry : symbols.entrySet()) {
+            if (body != null && body.contains(entry.getValue()) && isModOrBot(comment)) {
+                updateStockAnalysis(comment, body, entry.getKey(), entry.getValue());
             }
         }
 
         logInResponseFile(body);
     }
 
-    private void updateStockAnalysis(RedditComment comment, String body, String symbol) {
+    private void updateStockAnalysis(RedditComment comment, String body, Integer symbolId, String symbolName) {
         synchronized (stockAnalyzedList) {
-            StockAnalyzed stockAnalyzed = findStockAnalyzed(stockAnalyzedList, symbol);
+            StockAnalyzed stockAnalyzed = findStockAnalyzed(stockAnalyzedList, symbolId);
             StockAnalyzed.DetectionOrigin origin = new StockAnalyzed.DetectionOrigin(comment.getLinkUrl(), body);
 
             if (stockAnalyzed == null) {
+                var stock = new Stock();
+                stock.setId(symbolId);
+                stock.setSymbol(symbolName);
+
                 stockAnalyzed = StockAnalyzed.builder()
-                        .stock(symbol)
+                        .stock(stock)
                         .amount((short) 1)
                         .origin(new ArrayList<>(List.of(origin)))
                         .build();
@@ -131,9 +140,9 @@ public class RetrieveStocksMentionsService {
         }
     }
 
-    private static StockAnalyzed findStockAnalyzed(List<StockAnalyzed> list, String symbol) {
+    private static StockAnalyzed findStockAnalyzed(List<StockAnalyzed> list, Integer symbolId) {
         for (StockAnalyzed stockAnalyzed : list) {
-            if (stockAnalyzed.getStock().equals(symbol)) {
+            if (stockAnalyzed.getStock().getId().equals(symbolId)) {
                 return stockAnalyzed;
             }
         }
