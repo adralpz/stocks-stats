@@ -1,34 +1,35 @@
-package com.stocksstats.stocksstats.service;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import com.stocksstats.stocksstats.dto.StockAnalyzed;
-import com.stocksstats.stocksstats.entity.Origin;
-import com.stocksstats.stocksstats.repository.OriginRepo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+package com.stocksstats.stocksstats.service.retrievestocks;
 
 import com.stocksstats.stocksstats.config.Initializer;
+import com.stocksstats.stocksstats.dto.StockAnalyzed;
 import com.stocksstats.stocksstats.entity.Mention;
+import com.stocksstats.stocksstats.entity.Origin;
+import com.stocksstats.stocksstats.entity.Stock;
 import com.stocksstats.stocksstats.repository.MentionRepo;
-
+import com.stocksstats.stocksstats.repository.OriginRepo;
 import masecla.reddit4j.client.Reddit4J;
 import masecla.reddit4j.exceptions.AuthenticationException;
 import masecla.reddit4j.objects.RedditComment;
 import masecla.reddit4j.objects.RedditPost;
 import masecla.reddit4j.objects.Sorting;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import static com.stocksstats.stocksstats.utils.retrievestocks.RetrieveStockMentionsMapper.toMention;
+import static com.stocksstats.stocksstats.utils.retrievestocks.RetrieveStockMentionsMapper.toOrigin;
 
 @Service
 public class RetrieveStocksMentionsService {
@@ -39,7 +40,7 @@ public class RetrieveStocksMentionsService {
     private OriginRepo originRepo;
 
     private final Reddit4J client =Initializer.client;
-    private final List<String> symbols = Initializer.stockSymbols;
+    private final Map<Integer, String> symbols = Initializer.stockSymbols;
     private final List<StockAnalyzed> stockAnalyzedList = new ArrayList<>();
 
     @Value("${thread.pool.size:20}")
