@@ -1,24 +1,10 @@
 <script lang="ts" setup>
 import { Bar } from 'vue-chartjs'
-const chartData = ref({
-  labels: ['January', 'February', 'March', 'April', 'May'],
-  datasets: [
-    {
-      label: 'Data One',
-      backgroundColor: '#000000',
-      data: [40, 20, 12, 50, 10],
-    },
-  ],
-})
-const chartOptions = ref({
-  responsive: true,
-  maintainAspectRatio: false,
-})
 
-const { data, error } = await useFetch('http://192.168.1.147:8080/api/stocks');
+const { data, error } = await useFetch('http://localhost:8080/api/stocks');
 if (error) console.error(error.value);
 
-const stocks = ref<string[] | null>(data.value); 
+const stocks = ref<string[] | null>(data.value as any); 
 
 const page = ref(1);
 const pageCount = ref(10);
@@ -31,6 +17,23 @@ const rows = computed(() => {
     name: stock,
   }));
 });
+
+const selectedStocks = ref(stocks.value?.slice(0, 10));
+
+const chartData = ref({
+  labels: selectedStocks,
+  datasets: [
+    {
+      label: 'Data One',
+      backgroundColor: '#000000',
+      data: [40, 20, 12, 50, 10],
+    },
+  ],
+})
+const chartOptions = ref({
+  responsive: true,
+  maintainAspectRatio: false,
+})
 </script>
 
 <template>
@@ -46,6 +49,10 @@ const rows = computed(() => {
       </template>
       <div>
         <Bar :data="chartData" :options="chartOptions" />
+      </div>
+
+      <div>
+        <StockSelectorMenu :selectedStocks="selectedStocks" :stocks="stocks.slice(0, 20)" />
       </div>
 
       <div>
