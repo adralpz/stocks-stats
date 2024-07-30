@@ -13,10 +13,10 @@ spec:
         app: stocks-stats
     spec:
       containers:
-      - name: stocks-stats
-        image: gcr.io/symbolic-yeti-424018-j8/stocks-stats
-        ports:
-        - containerPort: 8080
+        - name: stocks-stats
+          image: gcr.io/symbolic-yeti-424018-j8/stocks-stats:${APP_VERSION}-${GITHUB_SHA}
+          ports:
+            - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
@@ -27,6 +27,6 @@ spec:
   selector:
     app: stocks-stats
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8080
+    - protocol: TCP
+      port: 80
+      targetPort: 8080

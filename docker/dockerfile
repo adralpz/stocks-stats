@@ -1,4 +1,0 @@
-FROM openjdk:21-jdk-slim
-VOLUME /tmp
-COPY /target/stocks-stats-1.0.0.jar stocks-stats-1.0.0.jar
-ENTRYPOINT ["java", "-jar", "/stocks-stats-1.0.0.jar"]
