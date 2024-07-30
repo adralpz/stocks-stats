@@ -22,8 +22,8 @@ public class Mention {
     @Column(name = "amount")
     private Short amount;
 
-    @Column(name = "created_at")
-    private LocalDate createdAt;
+    @Column(name = "last_mention")
+    private LocalDate lastMention;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "symbol_id")

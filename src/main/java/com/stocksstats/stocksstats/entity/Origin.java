@@ -5,28 +5,35 @@ import lombok.Getter;
 import lombok.Setter;
 import org.antlr.v4.runtime.misc.NotNull;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @Entity
-@Table(name = "origin")
+@Table(name = "origin", schema = "stock_stats")
 public class Origin {
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "origin_id_gen")
-    @SequenceGenerator(name = "origin_id_gen", sequenceName = "origin_id_seq", allocationSize = 1)
-    @Column(name = "id", nullable = false)
-    private Integer id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "origin_id_gen")
+	@SequenceGenerator(name = "origin_id_gen", sequenceName = "stock_stats.origin_id_seq", allocationSize = 1)
+	@Column(name = "id", nullable = false)
+	private Integer id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "mention_id", nullable = false)
-    private Mention mention;
+	@NotNull
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@OnDelete(action = OnDeleteAction.CASCADE)
+	@JoinColumn(name = "mention_id", nullable = false)
+	private Mention mention;
 
-    @Lob
-    @Column(name = "url")
-    private String url;
+	@Column(name = "url", length = Integer.MAX_VALUE)
+	private String url;
 
-    @Lob
-    @Column(name = "text_fragment")
-    private String textFragment;
+	@Column(name = "text_fragment", length = Integer.MAX_VALUE)
+	private String textFragment;
+
+	@Column(name = "date")
+	private LocalDate date;
 
 }

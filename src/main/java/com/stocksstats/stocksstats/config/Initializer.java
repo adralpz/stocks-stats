@@ -10,22 +10,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 @Data
 @Configuration
-public class Initializer {
+public class Initializer implements WebMvcConfigurer {
+
 
     @Autowired
     private StockRepo stockRepo;
 
     public static Reddit4J client;
-    public static LinkedHashMap<Integer, String> stockSymbols;
+    public static Map<Integer, String> stockSymbols;
+
     public static List<String> subreddits;
 
     @Value("classpath:reddit-credentials.properties")
@@ -45,21 +49,32 @@ public class Initializer {
         }
     }
 
-    private void initClient() throws AuthenticationException, IOException, InterruptedException {
-        Properties props = retrieveCredentials();
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:3000")
+                .allowedMethods("GET", "POST", "PUT", "DELETE")
+                .allowedHeaders("*");
+    }
 
-        Reddit4J client = Reddit4J.rateLimited()
+    private void initClient() throws AuthenticationException, IOException, InterruptedException {
+        var props = retrieveCredentials();
+
+        final var client = Reddit4J.rateLimited()
                 .setClientId(props.getProperty("api-key"))
                 .setClientSecret(props.getProperty("secret-key"))
-                .setUserAgent(new UserAgentBuilder().appname("stocks-stats").author("putotonto").version("1.0"));
+                .setUserAgent(new UserAgentBuilder().appname("stocks-stats")
+                        .author("putotonto").version("1.0"));
+
         client.userlessConnect();
 
         Initializer.client = client;
     }
 
     private Properties retrieveCredentials() {
-        try (InputStream is = credentialsResource.getInputStream()) {
-            Properties props = new Properties();
+        try (final var is = credentialsResource.getInputStream()) {
+            var props = new Properties();
+
             props.load(is);
             return props;
         } catch (Exception ex) {
@@ -72,7 +87,9 @@ public class Initializer {
     private LinkedHashMap<Integer, String> stocksSymbols() {
         var stocksSymbols = new LinkedHashMap<Integer, String>();
         try {
-            stockRepo.findAll().forEach(stock -> stocksSymbols.put(stock.getId(), stock.getSymbol()));
+            stockRepo.findAll().forEach(stock ->
+                    stocksSymbols.put(stock.getId(), stock.getSymbol()));
+
             return stocksSymbols;
         } catch (Exception ignored) {
             // TODO Reemplazar por logger

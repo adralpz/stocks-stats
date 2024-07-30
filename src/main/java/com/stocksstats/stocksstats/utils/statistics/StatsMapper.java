@@ -1,4 +1,4 @@
-package com.stocksstats.stocksstats.utils.retrievestocks;
+package com.stocksstats.stocksstats.utils.statistics;
 
 import com.stocksstats.stocksstats.dto.MentionDateResponse;
 import com.stocksstats.stocksstats.entity.Mention;
