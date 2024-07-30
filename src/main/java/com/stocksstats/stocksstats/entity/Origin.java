@@ -7,6 +7,8 @@ import org.antlr.v4.runtime.misc.NotNull;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @Entity
@@ -29,5 +31,8 @@ public class Origin {
 
 	@Column(name = "text_fragment", length = Integer.MAX_VALUE)
 	private String textFragment;
+
+	@Column(name = "date")
+	private LocalDate date;
 
 }

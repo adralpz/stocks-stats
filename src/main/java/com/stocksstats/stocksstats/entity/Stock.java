@@ -1,29 +1,35 @@
 package com.stocksstats.stocksstats.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.antlr.v4.runtime.misc.NotNull;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "stock", schema = "stock_stats")
+@Table(name = "stock")
 public class Stock {
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "stock_id_gen")
-	@SequenceGenerator(name = "stock_id_gen", sequenceName = "stock_stats.stocks_id_seq", allocationSize = 1)
-	@Column(name = "id", nullable = false)
-	private Integer id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "stock_id_gen")
+    @SequenceGenerator(name = "stock_id_gen", sequenceName = "stocks_id_seq", allocationSize = 1)
+    @Column(name = "id", nullable = false)
+    private Integer id;
 
-	@NotNull
-	@Column(name = "symbol", nullable = false, length = Integer.MAX_VALUE)
-	private String symbol;
+    @Column(name = "symbol", nullable = false)
+    private String symbol;
 
-	@Column(name = "name", length = Integer.MAX_VALUE)
-	private String name;
+    @Column(name = "name")
+    private String name;
 
-	@Column(name = "reputation")
-	private Short reputation;
+    @Column(name = "reputation")
+    private Short reputation;
+
+    @OneToMany(mappedBy = "symbol")
+    @JsonIgnore
+    private Set<Mention> mentions = new LinkedHashSet<>();
 
 }

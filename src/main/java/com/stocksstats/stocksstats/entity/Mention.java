@@ -3,31 +3,34 @@ package com.stocksstats.stocksstats.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "mention", schema = "stock_stats")
+@Table(name = "mention")
 public class Mention {
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "mention_id_gen")
-	@SequenceGenerator(name = "mention_id_gen", sequenceName = "stock_stats.mention_id_seq", allocationSize = 1)
-	@Column(name = "id", nullable = false)
-	private Integer id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "mention_id_gen")
+    @SequenceGenerator(name = "mention_id_gen", sequenceName = "mention_id_seq", allocationSize = 1)
+    @Column(name = "id", nullable = false)
+    private Integer id;
 
-	@NotNull
-	@Column(name = "symbol", nullable = false, length = Integer.MAX_VALUE)
-	private String symbol;
+    @Column(name = "amount")
+    private Short amount;
 
-	@Column(name = "amount")
-	private Short amount;
+    @Column(name = "last_mention")
+    private LocalDate lastMention;
 
-	@ColumnDefault("now()")
-	@Column(name = "created_at")
-	private LocalDate createdAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "symbol_id")
+    private Stock symbol;
+
+    @Transient
+    @OneToMany(mappedBy = "mention")
+    private Set<Origin> origins = new LinkedHashSet<>();
 
 }
