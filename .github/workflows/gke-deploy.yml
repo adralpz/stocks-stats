@@ -26,6 +26,9 @@ jobs:
           java-version: '21'
           distribution: 'adopt'
 
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
       - name: Get version from pom.xml
         run: |
           APP_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
@@ -47,7 +50,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t gcr.io/$PROJECT_ID/$DEPLOYMENT_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA .
+          docker build --build-arg JAR_FILE=target/stocks-stats-${{ env.APP_VERSION }}.jar -t gcr.io/$PROJECT_ID/$DEPLOYMENT_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA .
 
       - name: Push Docker image
         run: |
