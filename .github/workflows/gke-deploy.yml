@@ -1,4 +1,4 @@
-name: build-and-deploy to GKE
+name: Build and Deploy to GKE
 
 on:
   push:
@@ -6,16 +6,30 @@ on:
       - main
 
 env:
-  PROJECT_ID: symbolic-yeti-424018-j8
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   GKE_CLUSTER: my-cluster
   GKE_ZONE: us-central1-c
+  DEPLOYMENT_NAME: stocks-stats
 
 jobs:
-  deploy:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Setup JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'adopt'
+
+      - name: Get version from pom.xml
+        run: |
+          APP_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
 
       - name: Setup gcloud CLI
         uses: google-github-actions/setup-gcloud@v0.2.0
@@ -23,26 +37,26 @@ jobs:
           service_account_key: ${{ secrets.GKE_SA_KEY }}
           project_id: ${{ secrets.GKE_PROJECT }}
 
-      - name: Install GKE Auth Plugin
+      - name: Configure Docker
         run: |
-          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-          sudo apt-get update
-          sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
+          gcloud --quiet auth configure-docker
 
       - name: Get GKE Credentials
         run: |
-          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone ${{ env.GKE_ZONE }} --project ${{ env.PROJECT_ID }}
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone ${{ env.GKE_ZONE }}
 
-      - name: Check directory structure
+      - name: Build Docker image
         run: |
-          pwd
-          ls -R
+          docker build -t gcr.io/$PROJECT_ID/$DEPLOYMENT_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA .
+
+      - name: Push Docker image
+        run: |
+          docker push gcr.io/$PROJECT_ID/$DEPLOYMENT_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA
 
       - name: Update deployment file
         run: |
-          sed -i "s|APP_VERSION|${{ env.APP_VERSION }}|g; s|GITHUB_SHA|${{ github.sha }}|g" kubernetes/deployment.yaml
+          sed -i "s|APP_VERSION|${{ env.APP_VERSION }}|g; s|GITHUB_SHA|${{ github.sha }}|g" .github/kubernetes/deployment.yaml
 
       - name: Deploy to GKE
         run: |
-          kubectl apply -f kubernetes/deployment.yaml
+          kubectl apply -f .github/kubernetes/deployment.yaml
