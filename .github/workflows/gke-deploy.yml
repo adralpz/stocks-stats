@@ -1,0 +1,62 @@
+name: build-and-deploy to GKE
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: symbolic-yeti-424018-j8
+  GKE_CLUSTER: my-cluster
+  GKE_ZONE: us-central1-c
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'adopt'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      # Setup gcloud CLI
+      - uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          service_account_key: ${{ secrets.GKE_SA_KEY }}
+          project_id: ${{ secrets.GKE_PROJECT }}
+
+      # Configure Docker to use the gcloud command-line tool as a credential helper
+      - run: |-
+          gcloud --quiet auth configure-docker
+
+      - name: Extract version from pom.xml
+        run: echo "APP_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+      # Build the Docker image
+      - name: Build
+        run: |-
+          docker build \
+            --build-arg JAR_FILE=target/stocks-stats-${{ env.APP_VERSION }}.jar \
+            --tag "gcr.io/$PROJECT_ID/stocks-stats:${{ env.APP_VERSION }}-$GITHUB_SHA" \
+            .
+
+      # Push the Docker image to Google Container Registry
+      - name: Publish
+        run: |-
+          docker push "gcr.io/$PROJECT_ID/stocks-stats:${{ env.APP_VERSION }}-$GITHUB_SHA"
+
+      # Deploy the Docker image to the GKE cluster
+      - name: Deploy
+        run: |-
+            gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE --project $PROJECT_ID
+            sed -i 's|${APP_VERSION}|'"$APP_VERSION"'|g; s|${GITHUB_SHA}|'"$GITHUB_SHA"'|g' kubernetes/deployment.yaml
+            kubectl apply -f kubernetes/deployment.yaml
