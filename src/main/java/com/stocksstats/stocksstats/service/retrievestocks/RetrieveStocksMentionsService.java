@@ -23,6 +23,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,7 @@ public class RetrieveStocksMentionsService {
                     .limit(100).submit();
 
             for (final RedditPost post : posts) {
+
                 executor.execute(() -> processPost(post));
             }
 
@@ -92,6 +94,7 @@ public class RetrieveStocksMentionsService {
         try {
             var comments = client.getCommentsForPost("wallstreetbets", post.getId()).limit(100).submit();
             for (final RedditComment comment : comments) {
+
                 processComment(comment);
             }
 

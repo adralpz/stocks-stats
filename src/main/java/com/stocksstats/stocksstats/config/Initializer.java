@@ -23,11 +23,13 @@ import java.util.Properties;
 @Configuration
 public class Initializer implements WebMvcConfigurer {
 
+
     @Autowired
     private StockRepo stockRepo;
 
     public static Reddit4J client;
     public static Map<Integer, String> stockSymbols;
+
     public static List<String> subreddits;
 
     @Value("classpath:reddit-credentials.properties")
@@ -63,6 +65,7 @@ public class Initializer implements WebMvcConfigurer {
                 .setClientSecret(props.getProperty("secret-key"))
                 .setUserAgent(new UserAgentBuilder().appname("stocks-stats")
                         .author("putotonto").version("1.0"));
+
         client.userlessConnect();
 
         Initializer.client = client;
@@ -71,6 +74,7 @@ public class Initializer implements WebMvcConfigurer {
     private Properties retrieveCredentials() {
         try (final var is = credentialsResource.getInputStream()) {
             var props = new Properties();
+
             props.load(is);
             return props;
         } catch (Exception ex) {
