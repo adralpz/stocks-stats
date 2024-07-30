@@ -14,7 +14,7 @@ public final class RetrieveStockMentionsMapper {
         Mention mention = new Mention();
         mention.setSymbol(stockAnalyzed.getStock());
         mention.setAmount(stockAnalyzed.getAmount());
-        mention.setCreatedAt(LocalDate.now());
+        mention.setLastMention(LocalDate.now());
 
         return mention;
     }
