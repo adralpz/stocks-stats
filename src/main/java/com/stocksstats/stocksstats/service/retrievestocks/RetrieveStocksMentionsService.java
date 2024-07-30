@@ -2,7 +2,6 @@ package com.stocksstats.stocksstats.service.retrievestocks;
 
 import com.stocksstats.stocksstats.config.Initializer;
 import com.stocksstats.stocksstats.dto.StockAnalyzed;
-import com.stocksstats.stocksstats.entity.Mention;
 import com.stocksstats.stocksstats.entity.Origin;
 import com.stocksstats.stocksstats.entity.Stock;
 import com.stocksstats.stocksstats.repository.MentionRepo;
@@ -21,15 +20,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import static com.stocksstats.stocksstats.utils.retrievestocks.RetrieveStockMentionsMapper.toMention;
-import static com.stocksstats.stocksstats.utils.retrievestocks.RetrieveStockMentionsMapper.toOrigin;
+import static com.stocksstats.stocksstats.utils.retrievestocks.RetrieveStocksMentionsMapper.toMention;
+import static com.stocksstats.stocksstats.utils.retrievestocks.RetrieveStocksMentionsMapper.toOrigin;
 
 @Service
 public class RetrieveStocksMentionsService {
@@ -39,8 +44,8 @@ public class RetrieveStocksMentionsService {
     @Autowired
     private OriginRepo originRepo;
 
-    private final Reddit4J client =Initializer.client;
-    private final Map<Integer, String> symbols = Initializer.stockSymbols;
+    private final Reddit4J client = Initializer.client;
+    private Map<Integer, String> symbols = Initializer.stockSymbols;
     private final List<StockAnalyzed> stockAnalyzedList = new ArrayList<>();
 
     @Value("${thread.pool.size:20}")
@@ -53,7 +58,8 @@ public class RetrieveStocksMentionsService {
             var posts = client.getSubredditPosts("wallstreetbets", Sorting.NEW)
                     .limit(100).submit();
 
-            for (RedditPost post : posts) {
+            for (final RedditPost post : posts) {
+
                 executor.execute(() -> processPost(post));
             }
 
@@ -69,12 +75,14 @@ public class RetrieveStocksMentionsService {
     }
 
     private void save() {
-        for (StockAnalyzed stockAnalyzed : stockAnalyzedList) {
-            Mention mention = mentionRepo.save(toMention(stockAnalyzed));
+        for (final var stockAnalyzed : stockAnalyzedList) {
+            var mention = mentionRepo.save(toMention(stockAnalyzed));
 
             List<Origin> originList = new ArrayList<>();
-            for (StockAnalyzed.DetectionOrigin origin : stockAnalyzed.getOrigin()) {
-                Origin mappedOrigin = toOrigin(origin.getUrl(), origin.getText(), mention);
+            for (final var origin : stockAnalyzed.getOrigin()) {
+                final var originDate = origin.getDate() != null ? origin.getDate() : LocalDate.now();
+
+                Origin mappedOrigin = toOrigin(origin.getUrl(), origin.getText(), mention, originDate);
                 originList.add(mappedOrigin);
             }
 
@@ -82,26 +90,25 @@ public class RetrieveStocksMentionsService {
         }
     }
 
-
     private void processPost(RedditPost post) {
         try {
-            List<RedditComment> comments = client.getCommentsForPost("wallstreetbets", post.getId()).limit(100).submit();
-            for (RedditComment comment : comments) {
+            var comments = client.getCommentsForPost("wallstreetbets", post.getId()).limit(100).submit();
+            for (final RedditComment comment : comments) {
+
                 processComment(comment);
             }
 
             Thread.sleep(1000);
         } catch (Exception e) {
-            // TODO Reemplazar por logger
-            System.err.println(e.getMessage());
+            Logger.getLogger(RetrieveStocksMentionsService.class.getName()).log(Level.SEVERE, e.getMessage(), e);
         }
     }
 
     private void processComment(RedditComment comment) {
         String body = comment.getBody();
 
-        for (Map.Entry<Integer, String> entry : symbols.entrySet()) {
-            if (body != null && body.contains(entry.getValue()) && isModOrBot(comment)) {
+        for (final var entry : symbols.entrySet()) {
+            if (body != null && body.contains(entry.getValue()) && !isModOrBot(comment)) {
                 updateStockAnalysis(comment, body, entry.getKey(), entry.getValue());
             }
         }
@@ -111,8 +118,11 @@ public class RetrieveStocksMentionsService {
 
     private void updateStockAnalysis(RedditComment comment, String body, Integer symbolId, String symbolName) {
         synchronized (stockAnalyzedList) {
-            StockAnalyzed stockAnalyzed = findStockAnalyzed(stockAnalyzedList, symbolId);
-            StockAnalyzed.DetectionOrigin origin = new StockAnalyzed.DetectionOrigin(comment.getLinkUrl(), body);
+            var stockAnalyzed = locateStockAnalyzed(stockAnalyzedList, symbolId);
+            var origin = new StockAnalyzed.DetectionOrigin(comment.getLinkUrl(), body, Instant.ofEpochSecond(
+                    comment.getCreatedUtc())
+                    .atZone(ZoneOffset.UTC)
+                    .toLocalDate());
 
             if (stockAnalyzed == null) {
                 var stock = new Stock();
@@ -134,15 +144,15 @@ public class RetrieveStocksMentionsService {
 
     private void logInResponseFile(String body) {
         try {
-            String response = String.format("%s %s", body, "\n---------------------------------\n");
+            final var response = String.format("%s %s", body, "\n---------------------------------\n");
             Files.write(Paths.get("src/main/resources/response.txt"), response.getBytes(), StandardOpenOption.APPEND);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static StockAnalyzed findStockAnalyzed(List<StockAnalyzed> list, Integer symbolId) {
-        for (StockAnalyzed stockAnalyzed : list) {
+    private static StockAnalyzed locateStockAnalyzed(List<StockAnalyzed> stockAnalyzedlist, Integer symbolId) {
+        for (final var stockAnalyzed : stockAnalyzedlist) {
             if (stockAnalyzed.getStock().getId().equals(symbolId)) {
                 return stockAnalyzed;
             }
@@ -152,8 +162,8 @@ public class RetrieveStocksMentionsService {
 
     private static boolean isModOrBot(RedditComment comment) {
         return comment.getAuthor().toLowerCase().contains("bot")  ||
-                comment.getAuthor().toLowerCase().contains("mod");
+                comment.getAuthor().toLowerCase().contains("mod") ||
+                comment.getBody().toLowerCase().contains("bot");
     }
-
 
 }

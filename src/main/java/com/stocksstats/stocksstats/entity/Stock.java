@@ -1,9 +1,9 @@
 package com.stocksstats.stocksstats.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.antlr.v4.runtime.misc.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -29,6 +29,7 @@ public class Stock {
     private Short reputation;
 
     @OneToMany(mappedBy = "symbol")
+    @JsonIgnore
     private Set<Mention> mentions = new LinkedHashSet<>();
 
 }

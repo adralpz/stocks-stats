@@ -10,6 +10,6 @@ import java.util.List;
 @Repository
 public interface MentionRepo extends JpaRepository<Mention, Integer> {
 
-    List<Mention> findAllByCreatedAtOrderByAmountAsc(LocalDate createdAt);
+    List<Mention> findAllByLastMentionOrderByAmountAsc(LocalDate createdAt);
 
 }
