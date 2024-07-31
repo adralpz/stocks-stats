@@ -8,11 +8,13 @@ export function useMentions() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
   const fetchMentions = useCallback(async (date: Date) => {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await fetch(`http://localhost:8080/api/mentions-count?date=${date.toISOString().split('T')[0]}`)
+      const response = await fetch(`${API_URL}/mentions-count?date=${date.toISOString().split('T')[0]}`)
       if (!response.ok) throw new Error('Failed to fetch mentions')
       const data = await response.json()
       setMentions(data || [])

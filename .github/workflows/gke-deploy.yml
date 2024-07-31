@@ -1,4 +1,4 @@
-name: Build and Deploy to GKE
+name: Build and Deploy to GKE and GitHub Pages
 
 on:
   push:
@@ -61,3 +61,22 @@ jobs:
 
       - name: Deploy to GKE
         run: kubectl apply -f .github/kubernetes/deployment.yaml
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install and Build Frontend
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+        run: |
+          cd front/stocks-stats
+          npm ci
+          npm run build
+
+      - name: Deploy Frontend to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./front/stocks-stats/out

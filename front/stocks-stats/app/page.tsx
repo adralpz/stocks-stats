@@ -92,7 +92,7 @@ export default function Home() {
               <div className="mt-4">
                 <StockSelector 
                   mentions={mentions} 
-                  selectedStocks={selectedStocks}
+                  selectedStocks={selectedStocks} 
                   onStockSelect={handleStockSelect} 
                 />
               </div>
