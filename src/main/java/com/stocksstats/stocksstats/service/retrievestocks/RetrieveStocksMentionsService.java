@@ -113,7 +113,6 @@ public class RetrieveStocksMentionsService {
             }
         }
 
-        logInResponseFile(body);
     }
 
     private void updateStockAnalysis(RedditComment comment, String body, Integer symbolId, String symbolName) {
@@ -139,15 +138,6 @@ public class RetrieveStocksMentionsService {
                 stockAnalyzed.setAmount((short) (stockAnalyzed.getAmount() + 1));
                 stockAnalyzed.getOrigin().add(origin);
             }
-        }
-    }
-
-    private void logInResponseFile(String body) {
-        try {
-            final var response = String.format("%s %s", body, "\n---------------------------------\n");
-            Files.write(Paths.get("src/main/resources/response.txt"), response.getBytes(), StandardOpenOption.APPEND);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 
