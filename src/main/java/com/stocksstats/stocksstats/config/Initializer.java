@@ -52,7 +52,7 @@ public class Initializer implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000", "https://adrianlopez.tech/")
+                .allowedOrigins("http://localhost:3000", "https://api.adrianlopez.tech/")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
     }
 
