@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class StocksController {
 
     @Autowired
