@@ -57,7 +57,9 @@ jobs:
 
       - name: Update deployment file
         run: |
-          sed -i "s|APP_VERSION|${{ env.APP_VERSION }}|g; s|GITHUB_SHA|${{ github.sha }}|g" .github/kubernetes/deployment.yaml
+          sed -i 's|APP_VERSION|${{ env.APP_VERSION }}|g; s|GITHUB_SHA|${{ github.sha }}|g' .github/kubernetes/deployment.yaml
+          echo "Contenido del archivo de despliegue actualizado:"
+          cat .github/kubernetes/deployment.yaml
 
       - name: Deploy to GKE
         run: kubectl apply -f .github/kubernetes/deployment.yaml

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: stocks-stats
-          image: gcr.io/symbolic-yeti-424018-j8/stocks-stats:${APP_VERSION}-${GITHUB_SHA}
+          image: gcr.io/symbolic-yeti-424018-j8/stocks-stats:APP_VERSION-GITHUB_SHA
           ports:
             - containerPort: 8080
 ---
