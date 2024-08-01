@@ -52,8 +52,10 @@ public class Initializer implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000", "https://adrianlopez.tech/", "https://adralpz.github.io/")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
+                .allowedOrigins("http://localhost:3000", "https://adrianlopez.tech", "https://adralpz.github.io")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 
     private void initClient() throws AuthenticationException, IOException, InterruptedException {
