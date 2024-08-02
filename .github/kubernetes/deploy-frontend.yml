@@ -22,10 +22,6 @@ jobs:
           npm ci
           npm run build
 
-      - name: cp CNAME
-        run: |
-          cp CNAME front/stocks-stats/out/
-
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
