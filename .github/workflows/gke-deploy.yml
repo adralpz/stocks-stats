@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  PROJECT_ID: ${{ secrets.GCP_PROJECT }}
   SERVICE_NAME: stocks-stats
   REGION: us-central1
 
