@@ -1,4 +1,4 @@
-name: Build and Deploy to GKE and GitHub Pages
+name: Deploy to Cloud Run and GitHub Pages
 
 on:
   push:
@@ -7,9 +7,8 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GKE_CLUSTER: my-cluster
-  GKE_ZONE: us-central1-c
-  DEPLOYMENT_NAME: stocks-stats
+  SERVICE_NAME: stocks-stats
+  REGION: us-central1
 
 jobs:
   setup-build-publish-deploy:
@@ -37,32 +36,26 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          credentials_json: '${{ secrets.GKE_SA_KEY }}'
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
-        with:
-          install_components: 'gke-gcloud-auth-plugin'
 
       - name: Configure Docker
         run: gcloud auth configure-docker
 
-      - name: Get GKE Credentials
-        run: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone ${{ env.GKE_ZONE }}
-
       - name: Build and Push Docker image
         run: |
-          docker build --build-arg JAR_FILE=target/stocks-stats-${{ env.APP_VERSION }}.jar -t gcr.io/$PROJECT_ID/$DEPLOYMENT_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA .
-          docker push gcr.io/$PROJECT_ID/$DEPLOYMENT_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA
+          docker build --build-arg JAR_FILE=target/stocks-stats-${{ env.APP_VERSION }}.jar -t gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA .
+          docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA
 
-      - name: Update deployment file
+      - name: Deploy to Cloud Run
         run: |
-          sed -i 's|APP_VERSION|${{ env.APP_VERSION }}|g; s|GITHUB_SHA|${{ github.sha }}|g' .github/kubernetes/deployment.yaml
-          echo "Contenido del archivo de despliegue actualizado:"
-          cat .github/kubernetes/deployment.yaml
-
-      - name: Deploy to GKE
-        run: kubectl apply -f .github/kubernetes/deployment.yaml
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated
 
       - name: Setup Node
         uses: actions/setup-node@v3
