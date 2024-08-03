@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - 'front/stocks-stats/**'
+      - '.github/workflows/**'
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT }}
@@ -11,16 +16,14 @@ env:
   REGION: us-central1
 
 jobs:
-  setup-build-publish-deploy:
-    name: Setup, Build, Publish, and Deploy
+  backend-deploy:
+    name: Backend - Build and Deploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Setup JDK
-        uses: actions/setup-java@v3
+      - uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -29,36 +32,38 @@ jobs:
         run: mvn clean package -DskipTests
 
       - name: Get version from pom.xml
-        run: |
-          APP_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+        run: echo "APP_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
+      - uses: google-github-actions/auth@v1
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - uses: google-github-actions/setup-gcloud@v1
 
       - name: Configure Docker
         run: gcloud auth configure-docker
 
-      - name: Build and Push Docker image
+      - name: Build and push Docker image
         run: |
           docker build --build-arg JAR_FILE=target/stocks-stats-${{ env.APP_VERSION }}.jar -t gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA .
           docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA
 
       - name: Deploy to Cloud Run
         run: |
-            gcloud run deploy stocks-stats \
-              --image gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA \
-              --platform managed \
-              --region ${{ env.REGION }} \
-              --allow-unauthenticated
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ env.APP_VERSION }}-${{ github.sha }} \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
+  frontend-deploy:
+    name: Frontend - Build and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
         with:
           node-version: '18'
 
