@@ -51,11 +51,12 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
+          gcloud run deploy stocks-stats \
             --image gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA \
             --platform managed \
             --region ${{ env.REGION }} \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --create-service
 
       - name: Setup Node
         uses: actions/setup-node@v3
