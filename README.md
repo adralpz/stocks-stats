@@ -37,7 +37,6 @@ stocks-stats/
 ├── front/                  # Código fuente del frontend (Next.js)
 ├── .github/
     └── workflows/          # Configuraciones de GitHub Actions
-    └──kubernetes/          # Archivos de configuración de Kubernetes
 ├── Dockerfile              # Dockerfile para el backend
 └── pom.xml                 # Configuración de Maven
 ```
