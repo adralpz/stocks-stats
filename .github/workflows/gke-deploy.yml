@@ -1,4 +1,4 @@
-name: Deploy to Cloud Run and GitHub Pages
+name: Deploy to GCP and GitHub Pages
 
 on:
   push:
