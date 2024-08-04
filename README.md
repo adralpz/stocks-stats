@@ -74,8 +74,8 @@ El proyecto está configurado para desplegarse automáticamente en Google Kubern
 
 - Cuenta de Google Cloud Platform con GKE habilitado
 - Secretos configurados en GitHub:
-  - `GKE_PROJECT`: ID del proyecto de GCP
-  - `GKE_SA_KEY`: Clave de cuenta de servicio de GCP codificada en base64
+  - `GCP_PROJECT`: ID del proyecto de GCP
+  - `GCP_SA_KEY`: Clave de cuenta de servicio de GCP codificada en base64
   - `NEXT_PUBLIC_API_URL`: IP de la API Rest
     
 ## Contribuciones
