@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -19,30 +20,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-@Data
 @Configuration
+@Component
+@Data
 public class Initializer {
     private static final Logger logger = LoggerFactory.getLogger(Initializer.class);
 
     @Autowired
     private StockRepo stockRepo;
 
-    public static Reddit4J client;
-    public static Map<Integer, String> stockSymbols;
-
-    public static List<String> subreddits;
+    private Reddit4J client;
+    private Map<Integer, String> stockSymbols;
+    private List<String> subreddits;
 
     @Value("classpath:reddit-credentials.properties")
     private Resource credentialsResource;
-
 
     @PostConstruct
     public void start() {
         try {
             initClient();
-            Initializer.stockSymbols = stocksSymbols();
-            // TODO Elaborar una lista de subreddits y recuparla desde aqui
-
+            this.stockSymbols = stocksSymbols();
+            // TODO: Elaborar una lista de subreddits y recuperarla desde aquí
         } catch (Exception ex) {
             logger.error("Error durante la inicialización", ex);
             throw new RuntimeException("Fallo en la inicialización", ex);
@@ -51,8 +50,11 @@ public class Initializer {
 
     private void initClient() throws AuthenticationException, IOException, InterruptedException {
         var props = retrieveCredentials();
+        if (props == null) {
+            throw new RuntimeException("No se pudieron recuperar las credenciales");
+        }
 
-        final var client = Reddit4J.rateLimited()
+        final var clientBuilder = Reddit4J.rateLimited()
                 .setClientId(props.getProperty("api-key"))
                 .setClientSecret(props.getProperty("secret-key"))
                 .setUserAgent(new UserAgentBuilder().appname("stocks-stats")
@@ -65,7 +67,6 @@ public class Initializer {
     private Properties retrieveCredentials() {
         try (final var is = credentialsResource.getInputStream()) {
             var props = new Properties();
-
             props.load(is);
             return props;
         } catch (Exception ex) {

@@ -6,6 +6,7 @@ import com.stocksstats.stocksstats.entity.Origin;
 import com.stocksstats.stocksstats.entity.Stock;
 import com.stocksstats.stocksstats.repository.MentionRepo;
 import com.stocksstats.stocksstats.repository.OriginRepo;
+import jakarta.annotation.PostConstruct;
 import masecla.reddit4j.client.Reddit4J;
 import masecla.reddit4j.exceptions.AuthenticationException;
 import masecla.reddit4j.objects.RedditComment;
@@ -29,11 +30,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import static com.stocksstats.stocksstats.utils.retrievestocks.RetrieveStocksMentionsMapper.toMention;
-import static com.stocksstats.stocksstats.utils.retrievestocks.RetrieveStocksMentionsMapper.toOrigin;
+import static com.stocksstats.stocksstats.utils.retrievestocks.RetrieveStockMentionsMapper.toMention;
+import static com.stocksstats.stocksstats.utils.retrievestocks.RetrieveStockMentionsMapper.toOrigin;
+
 
 @Service
 public class RetrieveStocksMentionsService {
@@ -54,6 +54,16 @@ public class RetrieveStocksMentionsService {
 
     @Value("${thread.pool.size:20}")
     private int THREAD_POOL_SIZE;
+
+    @PostConstruct
+    public void init() {
+        this.client = initializer.getClient();
+        this.symbols = initializer.getStockSymbols();
+        if (this.client == null || this.symbols == null) {
+            logger.error("Failed to initialize client or symbols from Initializer");
+            throw new IllegalStateException("Failed to initialize from Initializer");
+        }
+    }
 
     // Se ejecuta una vez al dia a las 12:00pm
     @Scheduled(cron = "0 0 12 * * *", zone = "Europe/Madrid")

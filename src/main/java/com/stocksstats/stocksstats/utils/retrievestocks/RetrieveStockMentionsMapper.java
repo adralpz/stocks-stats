@@ -11,7 +11,7 @@ import java.time.LocalDate;
 public final class RetrieveStockMentionsMapper {
 
     public static Mention toMention(StockAnalyzed stockAnalyzed) {
-        Mention mention = new Mention();
+        var mention = new Mention();
         mention.setSymbol(stockAnalyzed.getStock());
         mention.setAmount(stockAnalyzed.getAmount());
         mention.setLastMention(LocalDate.now());
@@ -19,11 +19,12 @@ public final class RetrieveStockMentionsMapper {
         return mention;
     }
 
-    public static Origin toOrigin(String url, String textFragment, Mention mention) {
-        Origin origin = new Origin();
+    public static Origin toOrigin(String url, String textFragment, Mention mention, LocalDate date) {
+        var origin = new Origin();
         origin.setUrl(url);
         origin.setTextFragment(textFragment);
         origin.setMention(mention);
+        origin.setDate(date);
         return origin;
     }
 
