@@ -6,6 +6,8 @@ import lombok.Data;
 import masecla.reddit4j.client.Reddit4J;
 import masecla.reddit4j.client.UserAgentBuilder;
 import masecla.reddit4j.exceptions.AuthenticationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +22,7 @@ import java.util.Properties;
 @Data
 @Configuration
 public class Initializer {
-
+    private static final Logger logger = LoggerFactory.getLogger(Initializer.class);
 
     @Autowired
     private StockRepo stockRepo;
@@ -42,8 +44,8 @@ public class Initializer {
             // TODO Elaborar una lista de subreddits y recuparla desde aqui
 
         } catch (Exception ex) {
-            // TODO Reemplazar con logger
-            System.err.println("Error de mierda: " + ex.getMessage());
+            logger.error("Error durante la inicialización", ex);
+            throw new RuntimeException("Fallo en la inicialización", ex);
         }
     }
 
@@ -56,9 +58,8 @@ public class Initializer {
                 .setUserAgent(new UserAgentBuilder().appname("stocks-stats")
                         .author("putotonto").version("1.0"));
 
-        client.userlessConnect();
-
-        Initializer.client = client;
+        clientBuilder.userlessConnect();
+        logger.info("Cliente Reddit4J inicializado correctamente");
     }
 
     private Properties retrieveCredentials() {
@@ -68,8 +69,7 @@ public class Initializer {
             props.load(is);
             return props;
         } catch (Exception ex) {
-            // TODO Reemplazar por logger
-            System.err.println("Error al encontrar el archivo de credenciales");
+            logger.error("Error al encontrar el archivo de credenciales", ex);
             return null;
         }
     }
@@ -79,12 +79,11 @@ public class Initializer {
         try {
             stockRepo.findAll().forEach(stock ->
                     stocksSymbols.put(stock.getId(), stock.getSymbol()));
-
+            logger.info("Símbolos de stocks cargados correctamente: {} símbolos", stocksSymbols.size());
             return stocksSymbols;
-        } catch (Exception ignored) {
-            // TODO Reemplazar por logger
-            System.err.println("Error al leer el archivo de simbolos de stocks");
-            return null;
+        } catch (Exception ex) {
+            logger.error("Error al leer los símbolos de stocks", ex);
+            throw new RuntimeException("No se pudieron cargar los símbolos de stocks", ex);
         }
     }
 

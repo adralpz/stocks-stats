@@ -11,15 +11,14 @@ import masecla.reddit4j.exceptions.AuthenticationException;
 import masecla.reddit4j.objects.RedditComment;
 import masecla.reddit4j.objects.RedditPost;
 import masecla.reddit4j.objects.Sorting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -38,14 +37,19 @@ import static com.stocksstats.stocksstats.utils.retrievestocks.RetrieveStocksMen
 
 @Service
 public class RetrieveStocksMentionsService {
+    private static final Logger logger = LoggerFactory.getLogger(RetrieveStocksMentionsService.class);
 
     @Autowired
     private MentionRepo mentionRepo;
+
     @Autowired
     private OriginRepo originRepo;
 
-    private final Reddit4J client = Initializer.client;
-    private Map<Integer, String> symbols = Initializer.stockSymbols;
+    @Autowired
+    private Initializer initializer;
+
+    private Reddit4J client;
+    private Map<Integer, String> symbols;
     private final List<StockAnalyzed> stockAnalyzedList = new ArrayList<>();
 
     @Value("${thread.pool.size:20}")
@@ -54,27 +58,31 @@ public class RetrieveStocksMentionsService {
     // Se ejecuta una vez al dia a las 12:00pm
     @Scheduled(cron = "0 0 12 * * *", zone = "Europe/Madrid")
     public void analyzeSubreddit() {
+        logger.info("Starting subreddit analysis");
         try (ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE)) {
             var posts = client.getSubredditPosts("wallstreetbets", Sorting.NEW)
                     .limit(100).submit();
 
             for (final RedditPost post : posts) {
-
                 executor.execute(() -> processPost(post));
             }
 
             executor.shutdown();
             if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
+                logger.warn("Executor did not terminate in the specified time.");
                 executor.shutdownNow();
             }
 
             save();
         } catch (IOException | InterruptedException | AuthenticationException e) {
-            throw new RuntimeException(e);
+            logger.error("Error during subreddit analysis", e);
+            throw new RuntimeException("Failed to analyze subreddit", e);
         }
+        logger.info("Subreddit analysis completed");
     }
 
     private void save() {
+        logger.info("Saving analyzed stocks");
         for (final var stockAnalyzed : stockAnalyzedList) {
             var mention = mentionRepo.save(toMention(stockAnalyzed));
 
@@ -88,19 +96,20 @@ public class RetrieveStocksMentionsService {
 
             originRepo.saveAll(originList);
         }
+        logger.info("Saved {} analyzed stocks", stockAnalyzedList.size());
     }
 
     private void processPost(RedditPost post) {
         try {
+            logger.debug("Processing post: {}", post.getId());
             var comments = client.getCommentsForPost("wallstreetbets", post.getId()).limit(100).submit();
             for (final RedditComment comment : comments) {
-
                 processComment(comment);
             }
 
             Thread.sleep(1000);
         } catch (Exception e) {
-            Logger.getLogger(RetrieveStocksMentionsService.class.getName()).log(Level.SEVERE, e.getMessage(), e);
+            logger.error("Error processing post: " + post.getId(), e);
         }
     }
 
@@ -112,7 +121,6 @@ public class RetrieveStocksMentionsService {
                 updateStockAnalysis(comment, body, entry.getKey(), entry.getValue());
             }
         }
-
     }
 
     private void updateStockAnalysis(RedditComment comment, String body, Integer symbolId, String symbolName) {
