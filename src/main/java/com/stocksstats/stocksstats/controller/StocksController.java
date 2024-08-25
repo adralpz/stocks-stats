@@ -30,7 +30,7 @@ public class StocksController {
     @GetMapping("/analyze")
     public String analyzeSubreddit() {
         retrieveStocksMentionsService.analyzeSubreddit();
-        return "Analizado";
+        return "Analysis completed";
     }
 
     @GetMapping("/stocks")

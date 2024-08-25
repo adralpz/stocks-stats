@@ -11,14 +11,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 @Configuration
 @Component
@@ -39,7 +37,7 @@ public class Initializer {
     private String redditSecretKey;
 
     @PostConstruct
-    public void start() {
+    public void init() {
         try {
             initClient();
             this.stockSymbols = stocksSymbols();
@@ -51,10 +49,6 @@ public class Initializer {
     }
 
     private void initClient() throws AuthenticationException, IOException, InterruptedException {
-        var props = retrieveCredentials();
-        if (props == null) {
-            throw new RuntimeException("No se pudieron recuperar las credenciales");
-        }
 
         this.client = Reddit4J.rateLimited()
                 .setClientId(redditApiKey)
@@ -62,7 +56,7 @@ public class Initializer {
                 .setUserAgent(new UserAgentBuilder().appname("stocks-stats")
                         .author("putotonto").version("1.0"));
 
-        clientBuilder.userlessConnect();
+        client.userlessConnect();
         logger.info("Cliente Reddit4J inicializado correctamente");
     }
 

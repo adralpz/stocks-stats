@@ -45,8 +45,7 @@ public class RetrieveStocksMentionsService {
     @Autowired
     private OriginRepo originRepo;
 
-    @Autowired
-    private Initializer initializer;
+    private final Initializer initializer;
 
     private Reddit4J client;
     private Map<Integer, String> symbols;
@@ -54,6 +53,11 @@ public class RetrieveStocksMentionsService {
 
     @Value("${thread.pool.size:20}")
     private int THREAD_POOL_SIZE;
+
+    @Autowired
+    public RetrieveStocksMentionsService(Initializer initializer) {
+        this.initializer = initializer;
+    }
 
     @PostConstruct
     public void init() {
@@ -124,11 +128,27 @@ public class RetrieveStocksMentionsService {
     }
 
     private void processComment(RedditComment comment) {
-        String body = comment.getBody();
+        if (comment.getBody() == null || isModOrBot(comment)) {
+            return;
+        }
 
-        for (final var entry : symbols.entrySet()) {
-            if (body != null && body.contains(entry.getValue()) && !isModOrBot(comment)) {
-                updateStockAnalysis(comment, body, entry.getKey(), entry.getValue());
+        String[] words = comment.getBody().split("\\s+");
+
+        for (var symbol : symbols.entrySet()) {
+            String stockSymbol = symbol.getValue();
+
+            for (String word : words) {
+                word = word.replaceAll("[^a-zA-Z0-9$]", "");
+
+                if (word.startsWith("$")) {
+                    word = word.substring(1);
+                }
+
+                if (word.equalsIgnoreCase(stockSymbol) &&
+                        (stockSymbol.length() > 3 || word.equals(word.toUpperCase()))) {
+                    updateStockAnalysis(comment, comment.getBody(), symbol.getKey(), stockSymbol);
+                    break;
+                }
             }
         }
     }
