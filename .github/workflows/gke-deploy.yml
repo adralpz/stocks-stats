@@ -54,6 +54,12 @@ jobs:
             --image gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ env.APP_VERSION }}-${{ github.sha }} \
             --platform managed \
             --region ${{ env.REGION }} \
+            --set-env-vars DATABASE_URL=${{ secrets.DATABASE_URL }} \
+            --set-env-vars DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
+            --set-env-vars DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+            --set-env-vars N_THREADS=${{ secrets.N_THREADS }} \
+            --set-env-vars REDDIT_API_KEY=${{ secrets.REDDIT_API_KEY }} \
+            --set-env-vars REDDIT_SECRET_KEY=${{ secrets.REDDIT_SECRET_KEY }} \
             --allow-unauthenticated
 
   frontend-deploy:
