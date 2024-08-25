@@ -33,8 +33,10 @@ public class Initializer {
     private Map<Integer, String> stockSymbols;
     private List<String> subreddits;
 
-    @Value("classpath:reddit-credentials.properties")
-    private Resource credentialsResource;
+    @Value("${app.reddit.api-key}")
+    private String redditApiKey;
+    @Value("${app.reddit.secret-key}")
+    private String redditSecretKey;
 
     @PostConstruct
     public void start() {
@@ -54,25 +56,14 @@ public class Initializer {
             throw new RuntimeException("No se pudieron recuperar las credenciales");
         }
 
-        final var clientBuilder = Reddit4J.rateLimited()
-                .setClientId(props.getProperty("api-key"))
-                .setClientSecret(props.getProperty("secret-key"))
+        this.client = Reddit4J.rateLimited()
+                .setClientId(redditApiKey)
+                .setClientSecret(redditSecretKey)
                 .setUserAgent(new UserAgentBuilder().appname("stocks-stats")
                         .author("putotonto").version("1.0"));
 
         clientBuilder.userlessConnect();
         logger.info("Cliente Reddit4J inicializado correctamente");
-    }
-
-    private Properties retrieveCredentials() {
-        try (final var is = credentialsResource.getInputStream()) {
-            var props = new Properties();
-            props.load(is);
-            return props;
-        } catch (Exception ex) {
-            logger.error("Error al encontrar el archivo de credenciales", ex);
-            return null;
-        }
     }
 
     private LinkedHashMap<Integer, String> stocksSymbols() {
