@@ -66,7 +66,7 @@ jobs:
           fi
           
           if ! kubectl get deployment stocks-stats &> /dev/null; then
-            kubectl apply -f ../kubernetes/gke-deploy.yml
+            kubectl apply -f kubernetes/gke-deploy,yml
           fi
           
           kubectl set image deployment/stocks-stats stocks-stats=gcr.io/$PROJECT_ID/stocks-stats:${{ env.APP_VERSION }}-$GITHUB_SHA
