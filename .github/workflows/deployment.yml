@@ -55,16 +55,22 @@ jobs:
 
       - name: Deploy to GKE
         run: |
-          kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=gcr.io/$PROJECT_ID/${{ env.SERVICE_NAME }}:${{ env.APP_VERSION }}-$GITHUB_SHA
-          kubectl set env deployment/${{ env.SERVICE_NAME }} \
-            DATABASE_URL='${{ secrets.DATABASE_URL }}' \
-            DATABASE_USERNAME='${{ secrets.DATABASE_USERNAME }}' \
-            DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}' \
-            N_THREADS='${{ secrets.N_THREADS }}' \
-            REDDIT_API_KEY='${{ secrets.REDDIT_API_KEY }}' \
-            REDDIT_SECRET_KEY='${{ secrets.REDDIT_SECRET_KEY }}'
-          kubectl rollout status deployment/${{ env.SERVICE_NAME }}
+          if ! kubectl get secret stocks-stats-secrets &> /dev/null; then
+            kubectl create secret generic stocks-stats-secrets \
+              --from-literal=DATABASE_URL='${{ secrets.DATABASE_URL }}' \
+              --from-literal=DATABASE_USERNAME='${{ secrets.DATABASE_USERNAME }}' \
+              --from-literal=DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}' \
+              --from-literal=N_THREADS='${{ secrets.N_THREADS }}' \
+              --from-literal=REDDIT_API_KEY='${{ secrets.REDDIT_API_KEY }}' \
+              --from-literal=REDDIT_SECRET_KEY='${{ secrets.REDDIT_SECRET_KEY }}'
+          fi
           
+          if ! kubectl get deployment stocks-stats &> /dev/null; then
+            kubectl apply -f ../kubernetes/gke-deploy.yml
+          fi
+          
+          kubectl set image deployment/stocks-stats stocks-stats=gcr.io/$PROJECT_ID/stocks-stats:${{ env.APP_VERSION }}-$GITHUB_SHA
+          kubectl rollout status deployment/stocks-stats
 
   frontend-deploy:
     name: Frontend - Build and Deploy
