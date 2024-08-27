@@ -19,6 +19,7 @@ jobs:
   backend-deploy:
     name: Backend - Build and Deploy
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - uses: actions/checkout@v3
