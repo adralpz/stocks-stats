@@ -48,19 +48,24 @@ jobs:
           docker build --build-arg JAR_FILE=target/stocks-stats-${{ env.APP_VERSION }}.jar -t gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA .
           docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA
 
-      - name: Deploy to Cloud Run
+      - uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: stock-stats-cluster
+          location: ${{ env.REGION }}
+
+      - name: Deploy to GKE
         run: |
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ env.APP_VERSION }}-${{ github.sha }} \
-            --platform managed \
-            --region ${{ env.REGION }} \
-            --set-env-vars DATABASE_URL='${{ secrets.DATABASE_URL }}' \
-            --set-env-vars DATABASE_USERNAME='${{ secrets.DATABASE_USERNAME }}' \
-            --set-env-vars DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}' \
-            --set-env-vars N_THREADS='${{ secrets.N_THREADS }}' \
-            --set-env-vars REDDIT_API_KEY='${{ secrets.REDDIT_API_KEY }}' \
-            --set-env-vars REDDIT_SECRET_KEY='${{ secrets.REDDIT_SECRET_KEY }}' \
-            --allow-unauthenticated
+          kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=gcr.io/$PROJECT_ID/${{ env.SERVICE_NAME }}:${{ env.APP_VERSION }}-$GITHUB_SHA
+          kubectl set env deployment/${{ env.SERVICE_NAME }} \
+            DATABASE_URL='${{ secrets.DATABASE_URL }}' \
+            DATABASE_USERNAME='${{ secrets.DATABASE_USERNAME }}' \
+            DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}' \
+            N_THREADS='${{ secrets.N_THREADS }}' \
+            REDDIT_API_KEY='${{ secrets.REDDIT_API_KEY }}' \
+            REDDIT_SECRET_KEY='${{ secrets.REDDIT_SECRET_KEY }}'
+          kubectl rollout status deployment/${{ env.SERVICE_NAME }}
+          
+
   frontend-deploy:
     name: Frontend - Build and Deploy
     runs-on: ubuntu-latest
