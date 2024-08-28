@@ -55,7 +55,6 @@ kind: Service
 metadata:
   name: stocks-stats-service
 spec:
-  type: ClusterIP
   selector:
     app: stocks-stats
   ports:
@@ -79,6 +78,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: stocks-stats-service
+                name: stocks-stats
                 port:
                   number: 80
