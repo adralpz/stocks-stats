@@ -15,7 +15,7 @@ export function StockChart({ data, className = '' }: StockChartProps) {
           <XAxis dataKey="symbol" />
           <YAxis />
           <Tooltip />
-          <Bar dataKey="amount" fill="#8884d8" />
+          <Bar dataKey="amount" fill="#2a9d90" />
         </BarChart>
       </ResponsiveContainer>
     </div>
