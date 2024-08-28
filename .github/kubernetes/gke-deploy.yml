@@ -55,6 +55,7 @@ kind: Service
 metadata:
   name: stocks-stats-service
 spec:
+  type: ClusterIP
   selector:
     app: stocks-stats
   ports:
@@ -69,7 +70,6 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.global-static-ip-name: "stocks-stats-ip"
-    networking.gke.io/managed-certificates: "stocks-stats-certificate"
 spec:
   rules:
     - host: api.adrianlopez.tech
@@ -82,11 +82,3 @@ spec:
                 name: stocks-stats-service
                 port:
                   number: 80
----
-apiVersion: networking.gke.io/v1
-kind: ManagedCertificate
-metadata:
-  name: stocks-stats-certificate
-spec:
-  domains:
-    - api.adrianlopez.tech
