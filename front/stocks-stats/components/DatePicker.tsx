@@ -31,6 +31,8 @@ export function DatePicker({ date, onDateChange }: DatePickerProps) {
           selected={date}
           onSelect={onDateChange}
           initialFocus
+          fromDate={new Date(2024, 7, 25)} // Desde el 25 de agosto de 2024 (js tiene los meses desde el indice 0...)
+          toDate={new Date().getDate() -1}
         />
       </PopoverContent>
     </Popover>
