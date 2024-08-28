@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,36 +14,50 @@ spec:
         app: stocks-stats
     spec:
       containers:
-      - name: stocks-stats
-        image: gcr.io/PROJECT_ID/stocks-stats:1.0.2-GITHUB_SHA
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: stocks-stats-secrets
-              key: DATABASE_URL
-        - name: DATABASE_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: stocks-stats-secrets
-              key: DATABASE_USERNAME
-        - name: DATABASE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: stocks-stats-secrets
-              key: DATABASE_PASSWORD
-        - name: N_THREADS
-          valueFrom:
-            secretKeyRef:
-              name: stocks-stats-secrets
-              key: N_THREADS
-        - name: REDDIT_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: stocks-stats-secrets
-              key: REDDIT_API_KEY
-        - name: REDDIT_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: stocks-stats-secrets
-              key: REDDIT_SECRET_KEY
+        - name: stocks-stats
+          image: gcr.io/PROJECT_ID/stocks-stats:1.0.2-GITHUB_SHA
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: stocks-stats-secrets
+                  key: DATABASE_URL
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: stocks-stats-secrets
+                  key: DATABASE_USERNAME
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: stocks-stats-secrets
+                  key: DATABASE_PASSWORD
+            - name: N_THREADS
+              valueFrom:
+                secretKeyRef:
+                  name: stocks-stats-secrets
+                  key: N_THREADS
+            - name: REDDIT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stocks-stats-secrets
+                  key: REDDIT_API_KEY
+            - name: REDDIT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stocks-stats-secrets
+                  key: REDDIT_SECRET_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stocks-stats-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: stocks-stats
+  ports:
+    - port: 80
+      targetPort: 8080
