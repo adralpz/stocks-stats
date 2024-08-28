@@ -55,9 +55,38 @@ kind: Service
 metadata:
   name: stocks-stats-service
 spec:
-  type: LoadBalancer
   selector:
     app: stocks-stats
   ports:
-    - port: 80
+    - protocol: TCP
+      port: 80
       targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stocks-stats-ingress
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "stocks-stats-ip"
+    networking.gke.io/managed-certificates: "stocks-stats-certificate"
+spec:
+  rules:
+    - host: api.adrianlopez.tech
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: stocks-stats-service
+                port:
+                  number: 80
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: stocks-stats-certificate
+spec:
+  domains:
+    - api.adrianlopez.tech

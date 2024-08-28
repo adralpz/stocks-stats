@@ -8,7 +8,7 @@ on:
       - 'src/**'
       - 'pom.xml'
       - 'front/stocks-stats/**'
-      - '.github/workflows/**'
+      - '.github/**'
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT }}
