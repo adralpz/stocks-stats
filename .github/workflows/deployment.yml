@@ -13,7 +13,7 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT }}
   SERVICE_NAME: stocks-stats
-  REGION: us-central1
+  REGION: europe-west1
 
 jobs:
   backend-deploy:
@@ -51,24 +51,14 @@ jobs:
 
       - uses: google-github-actions/get-gke-credentials@v1
         with:
-          cluster_name: stock-stats-cluster
+          cluster_name: stock-statscluster
           location: ${{ env.REGION }}
 
       - name: Deploy to GKE
         run: |
-          if ! kubectl get secret stocks-stats-secrets &> /dev/null; then
-          kubectl create secret generic stocks-stats-secrets \
-          --from-literal=DATABASE_URL='***' \
-          --from-literal=DATABASE_USERNAME='***' \
-          --from-literal=DATABASE_PASSWORD='***' \
-          --from-literal=N_THREADS='***' \
-          --from-literal=REDDIT_API_KEY='***' \
-          --from-literal=REDDIT_SECRET_KEY='***'
-          fi
-          
-          kubectl apply -f .github/kubernetes/gke-deploy.yml
-          
-          kubectl get deployment stocks-stats
+          kubectl set image deployment/$SERVICE_NAME $SERVICE_NAME=gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA
+          kubectl rollout status deployment/$SERVICE_NAME
+          kubectl get services -o wide
 
   frontend-deploy:
     name: Frontend - Build and Deploy

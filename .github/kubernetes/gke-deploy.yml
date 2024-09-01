@@ -1,9 +1,7 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: stocks-stats
-  namespace: default
 spec:
   replicas: 1
   selector:
@@ -19,61 +17,42 @@ spec:
           image: gcr.io/glassy-augury-433219-d9/stocks-stats:latest
           ports:
             - containerPort: 8080
-          readinessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8080
-            initialDelaySeconds: 60
-            periodSeconds: 15
-          resources:
-            requests:
-              cpu: 250m
-              memory: 512Mi
-            limits:
-              cpu: 500m
-              memory: 1Gi
           env:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: stocks-stats-secrets
+                  name: app-secrets
                   key: DATABASE_URL
             - name: DATABASE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: stocks-stats-secrets
+                  name: app-secrets
                   key: DATABASE_USERNAME
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: stocks-stats-secrets
+                  name: app-secrets
                   key: DATABASE_PASSWORD
-            - name: N_THREADS
-              valueFrom:
-                secretKeyRef:
-                  name: stocks-stats-secrets
-                  key: N_THREADS
             - name: REDDIT_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: stocks-stats-secrets
+                  name: app-secrets
                   key: REDDIT_API_KEY
             - name: REDDIT_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: stocks-stats-secrets
+                  name: app-secrets
                   key: REDDIT_SECRET_KEY
+            - name: N_THREADS
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: N_THREADS
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: stocks-stats-service
+  name: stocks-stats
 spec:
   selector:
     app: stocks-stats
@@ -81,33 +60,4 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 8080
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: stocks-stats-ingress
-  annotations:
-    kubernetes.io/ingress.class: "gce"
-    kubernetes.io/ingress.global-static-ip-name: "stocks-stats-ip"
-spec:
-  rules:
-    - host: api.adrianlopez.tech
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: stocks-stats-service
-                port:
-                  number: 80
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: stocks-stats-pdb
-spec:
-  maxUnavailable: 1
-  selector:
-    matchLabels:
-      app: stocks-stats
+  type: LoadBalancer
