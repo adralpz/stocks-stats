@@ -46,10 +46,8 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-            docker build --build-arg JAR_FILE=target/stocks-stats-${{ env.APP_VERSION }}.jar -t gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA .
-            docker tag gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA gcr.io/$PROJECT_ID/$SERVICE_NAME:latest
-            docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA
-            docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:latest
+          docker build --build-arg JAR_FILE=target/stocks-stats-${{ env.APP_VERSION }}.jar -t gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA .
+          docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA
 
       - uses: google-github-actions/get-gke-credentials@v1
         with:
@@ -67,15 +65,13 @@ jobs:
               --from-literal=REDDIT_API_KEY='${{ secrets.REDDIT_API_KEY }}' \
               --from-literal=REDDIT_SECRET_KEY='${{ secrets.REDDIT_SECRET_KEY }}'
           fi
-                    
-          sed -i 's|gcr.io/PROJECT_ID/|gcr.io/${{ env.PROJECT_ID }}/|g' .github/kubernetes/gke-deploy.yml
-
-          if ! kubectl get deployment stocks-stats &> /dev/null; then
-            kubectl apply -f .github/kubernetes/gke-deploy.yml
-          fi
           
-          kubectl set image deployment/stocks-stats stocks-stats=gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ env.APP_VERSION }}-$GITHUB_SHA
-          kubectl rollout status deployment/stocks-stats
+          sed -i 's|gcr.io/PROJECT_ID/|gcr.io/${{ env.PROJECT_ID }}/|g' .github/kubernetes/gke-deploy.yml
+          sed -i 's|:1.0.2-GITHUB_SHA|:${{ env.APP_VERSION }}-${{ github.sha }}|g' .github/kubernetes/gke-deploy.yml
+
+          kubectl apply -f .github/kubernetes/gke-deploy.yml
+          
+          kubectl rollout status deployment/stocks-stats --timeout=300s
 
   frontend-deploy:
     name: Frontend - Build and Deploy
