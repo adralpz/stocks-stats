@@ -56,19 +56,19 @@ jobs:
 
       - name: Deploy to GKE
         run: |
-            if ! kubectl get secret stocks-stats-secrets &> /dev/null; then
-            kubectl create secret generic stocks-stats-secrets \
-            --from-literal=DATABASE_URL='***' \
-            --from-literal=DATABASE_USERNAME='***' \
-            --from-literal=DATABASE_PASSWORD='***' \
-            --from-literal=N_THREADS='***' \
-            --from-literal=REDDIT_API_KEY='***' \
-            --from-literal=REDDIT_SECRET_KEY='***'
-            fi
-            
-            kubectl apply -f .github/kubernetes/gke-deploy.yml
-            
-            kubectl get deployment stocks-stats
+          if ! kubectl get secret stocks-stats-secrets &> /dev/null; then
+          kubectl create secret generic stocks-stats-secrets \
+          --from-literal=DATABASE_URL='***' \
+          --from-literal=DATABASE_USERNAME='***' \
+          --from-literal=DATABASE_PASSWORD='***' \
+          --from-literal=N_THREADS='***' \
+          --from-literal=REDDIT_API_KEY='***' \
+          --from-literal=REDDIT_SECRET_KEY='***'
+          fi
+          
+          kubectl apply -f .github/kubernetes/gke-deploy.yml
+          
+          kubectl get deployment stocks-stats
 
   frontend-deploy:
     name: Frontend - Build and Deploy
