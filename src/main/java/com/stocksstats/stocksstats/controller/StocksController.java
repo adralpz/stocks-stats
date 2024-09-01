@@ -4,14 +4,11 @@ import com.stocksstats.stocksstats.dto.MentionDateRequest;
 import com.stocksstats.stocksstats.dto.MentionDateResponse;
 
 import com.stocksstats.stocksstats.entity.Stock;
-import com.stocksstats.stocksstats.entity.StockMentionCount;
 import com.stocksstats.stocksstats.service.retrievestocks.RetrieveStocksMentionsService;
 import com.stocksstats.stocksstats.service.statistics.StatsService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
