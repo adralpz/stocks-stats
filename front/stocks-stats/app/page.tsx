@@ -65,13 +65,13 @@ export default function Home() {
     <div className="container mx-auto p-4">
       <Card>
         <CardHeader>
-          <CardTitle>Stock Mentions Chart</CardTitle>
+          <CardTitle>Stock Mentions</CardTitle>
           <CardDescription>Total Mentions: {total}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between mb-4">
             <DatePicker date={date} onDateChange={handleDateChange} />
-            <Button onClick={handleSelectTop20} disabled={isLoading}>Select Top 20</Button>
+            <Button onClick={handleSelectTop20} disabled={isLoading}>20 Top Mentions</Button>
           </div>
           {isLoading ? (
             <div>Loading...</div>
