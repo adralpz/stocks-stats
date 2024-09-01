@@ -67,8 +67,6 @@ jobs:
             fi
             
             kubectl apply -f .github/kubernetes/gke-deploy.yml
-            
-            kubectl rollout status deployment/stocks-stats --timeout=300s
 
   frontend-deploy:
     name: Frontend - Build and Deploy
