@@ -45,9 +45,4 @@ public class StocksController {
         return statsService.getStocksAnalyzed(mentionDateRequest);
     }
 
-    @GetMapping("/mentions-count")
-    public List<StockMentionCount> getStockMentionCounts(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return statsService.getStockMentionCountsByDate(date);
-    }
-
 }
