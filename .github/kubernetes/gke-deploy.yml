@@ -21,32 +21,32 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: app-secrets
+                  name: stock-stats-secretos
                   key: DATABASE_URL
             - name: DATABASE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: app-secrets
+                  name: stock-stats-secretos
                   key: DATABASE_USERNAME
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: app-secrets
+                  name: stock-stats-secretos
                   key: DATABASE_PASSWORD
             - name: REDDIT_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: app-secrets
+                  name: stock-stats-secretos
                   key: REDDIT_API_KEY
             - name: REDDIT_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: app-secrets
+                  name: stock-stats-secretos
                   key: REDDIT_SECRET_KEY
             - name: N_THREADS
               valueFrom:
                 secretKeyRef:
-                  name: app-secrets
+                  name: stock-stats-secretos
                   key: N_THREADS
 ---
 apiVersion: v1
