@@ -14,11 +14,13 @@ spec:
       labels:
         app: stocks-stats
     spec:
-      containers:
-        - name: stocks-stats
-          image: gcr.io/glassy-augury-433219-d9/stocks-stats:latest
-          ports:
-            - containerPort: 8080
+      template:
+        spec:
+          containers:
+            - name: stocks-stats
+              image: gcr.io/glassy-augury-433219-d9/stocks-stats:latest
+              ports:
+                - containerPort: 8080
           readinessProbe:
             httpGet:
               path: /actuator/health

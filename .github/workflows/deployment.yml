@@ -67,6 +67,8 @@ jobs:
             fi
             
             kubectl apply -f .github/kubernetes/gke-deploy.yml
+            
+            kubectl get deployment stocks-stats
 
   frontend-deploy:
     name: Frontend - Build and Deploy
