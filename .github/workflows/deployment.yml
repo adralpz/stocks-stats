@@ -66,9 +66,10 @@ jobs:
               --from-literal=REDDIT_SECRET_KEY='${{ secrets.REDDIT_SECRET_KEY }}'
           fi
           
-          sed -i 's|gcr.io/PROJECT_ID/|gcr.io/${{ env.PROJECT_ID }}/|g' .github/kubernetes/gke-deploy.yml
-          sed -i 's|:1.0.2-GITHUB_SHA|:${{ env.APP_VERSION }}-${{ github.sha }}|g' .github/kubernetes/gke-deploy.yml
-
+          sed -i 's|${PROJECT_ID}|${{ env.PROJECT_ID }}|g' .github/kubernetes/gke-deploy.yml
+          sed -i 's|${APP_VERSION}|${{ env.APP_VERSION }}|g' .github/kubernetes/gke-deploy.yml
+          sed -i 's|${GITHUB_SHA}|${{ github.sha }}|g' .github/kubernetes/gke-deploy.yml
+          
           kubectl apply -f .github/kubernetes/gke-deploy.yml
           
           kubectl rollout status deployment/stocks-stats --timeout=300s

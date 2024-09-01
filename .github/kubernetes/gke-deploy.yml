@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: stocks-stats
-          image: gcr.io/PROJECT_ID/stocks-stats:1.0.2-GITHUB_SHA
+          image: gcr.io/${PROJECT_ID}/stocks-stats:${APP_VERSION}-${GITHUB_SHA}
           ports:
             - containerPort: 8080
           resources:
