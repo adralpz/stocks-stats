@@ -30,7 +30,6 @@ export function DatePicker({ date, onDateChange }: DatePickerProps) {
           mode="single"
           selected={date}
           onSelect={onDateChange}
-          initialFocus
           fromDate={new Date(2024, 7, 25)}
           toDate={new Date(new Date().setDate(new Date().getDate() - 1))}
         />
